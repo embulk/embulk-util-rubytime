@@ -1,6 +1,4 @@
-package org.embulk.spi.time;
-
-import org.embulk.spi.DataException;
+package org.embulk.util.rubytime;
 
 public class TimestampParseException extends DataException {
     public TimestampParseException(String message) {

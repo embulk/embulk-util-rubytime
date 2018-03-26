@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 import java.time.Instant;
 import java.util.regex.Matcher;

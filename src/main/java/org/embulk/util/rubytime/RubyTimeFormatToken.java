@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 /**
  * RubyTimeFormatToken represents a token in Ruby-compatible time format strings.

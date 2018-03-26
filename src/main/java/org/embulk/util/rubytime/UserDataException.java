@@ -1,3 +1,3 @@
-package org.embulk.config;
+package org.embulk.util.rubytime;
 
 public interface UserDataException {}

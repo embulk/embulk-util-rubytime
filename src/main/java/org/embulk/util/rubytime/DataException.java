@@ -1,6 +1,4 @@
-package org.embulk.spi;
-
-import org.embulk.config.UserDataException;
+package org.embulk.util.rubytime;
 
 public class DataException extends RuntimeException implements UserDataException {
     public DataException(String message) {

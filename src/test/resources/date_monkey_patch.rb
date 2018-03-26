@@ -1,7 +1,7 @@
 module DateMonkeyPatch
   require 'java'
 
-  java_package 'org.embulk.spi.time'
+  java_package 'org.embulk.util.rubytime'
 
   def self.included base
     base.instance_eval do
@@ -11,8 +11,8 @@ module DateMonkeyPatch
       end
 
       def parse_with_embulk_ruby_time_parser(fmt, str)
-        format = Java::org.embulk.spi.time.RubyTimeFormat.compile(fmt)
-        parser = Java::org.embulk.spi.time.RubyTimeParser.new(format)
+        format = Java::org.embulk.util.rubytime.RubyTimeFormat.compile(fmt)
+        parser = Java::org.embulk.util.rubytime.RubyTimeParser.new(format)
         time_parse_result = parser.parse(str)
         if time_parse_result.nil?
           return nil
