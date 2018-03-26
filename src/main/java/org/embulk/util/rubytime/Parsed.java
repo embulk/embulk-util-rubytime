@@ -583,7 +583,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
     Instant toInstant(final ZoneOffset defaultZoneOffset) {
         final ZoneOffset zoneOffset = TimeZoneIds.parseRubyTimeZoneOffset(this.timeZoneName, defaultZoneOffset);
         if (zoneOffset == null) {
-            throw new TimestampParseException(
+            throw new RubyTimeParseException(
                     "Invalid time zone ID '" + this.timeZoneName + "' in '" + this.originalString + "'");
         }
 
@@ -652,7 +652,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
         if (this.timeZoneName != null) {
             zoneId = TimeZoneIds.parseZoneIdWithJodaAndRubyZoneTab(this.timeZoneName);
             if (zoneId == null) {
-                throw new TimestampParseException(
+                throw new RubyTimeParseException(
                         "Invalid time zone ID '" + this.timeZoneName + "' in '" + this.originalString + "'");
             }
         } else {
@@ -780,7 +780,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
                                               int minuteOfHour,
                                               int secondOfMinute,
                                               final int nanoOfSecond,
-                                              final ZoneOffset zoneOffset) throws TimestampParseException {
+                                              final ZoneOffset zoneOffset) throws RubyTimeParseException {
         int offset = zoneOffset.getTotalSeconds();
 
         // Processing leap seconds using time offsets in a bit tricky manner.
@@ -894,7 +894,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
                                      hourOfDay, minuteOfHour, secondOfMinute, nanoOfSecond,
                                      ZoneOffset.UTC);
         } catch (DateTimeException ex) {
-            throw new TimestampParseException(ex);
+            throw new RubyTimeParseException(ex);
         }
     }
 
