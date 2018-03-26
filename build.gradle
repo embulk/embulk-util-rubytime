@@ -1,0 +1,27 @@
+plugins {
+    id "java"
+}
+
+repositories {
+    mavenCentral()
+}
+configurations {
+    provided
+}
+
+group = "org.embulk"
+version = "0.1.0-SNAPSHOT"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    testCompile "junit:junit:4.12"
+}
+
+test {
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+}
