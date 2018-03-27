@@ -18,6 +18,7 @@ targetCompatibility = 1.8
 dependencies {
     compile "joda-time:joda-time:2.9.2"
     testCompile "junit:junit:4.12"
+    testCompile "org.jruby:jruby-complete:9.1.15.0"
 }
 
 test {
