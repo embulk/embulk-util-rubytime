@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.Test;
 
 /**
- * TestRubyTimeFormat tests org.embulk.spi.time.RubyTimeFormat.
+ * TestRubyTimeFormat tests org.embulk.util.rubytime.RubyTimeFormat.
  */
 public class TestRubyTimeFormat {
     @Test

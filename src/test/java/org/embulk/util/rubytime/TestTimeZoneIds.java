@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 import java.time.ZoneId;
 import java.time.ZoneOffset;

@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 import java.time.Instant;
 import java.util.regex.Matcher;
@@ -38,7 +38,7 @@ class RubyTimeParser {
         this.format = format;
     }
 
-    public RubyTimeParsed parse(final String text) {
+    public Parsed parse(final String text) {
         return new StringParser(text).parse(this.format);
     }
 
@@ -68,8 +68,8 @@ class RubyTimeParser {
             this.fail = false;
         }
 
-        private RubyTimeParsed parse(final RubyTimeFormat format) {
-            final RubyTimeParsed.Builder builder = TimeParsed.rubyBuilder(this.text);
+        private Parsed parse(final RubyTimeFormat format) {
+            final Parsed.Builder builder = Parsed.builder(this.text);
 
             for (final RubyTimeFormat.TokenWithNext tokenWithNext : format) {
                 final RubyTimeFormatToken token = tokenWithNext.getToken();

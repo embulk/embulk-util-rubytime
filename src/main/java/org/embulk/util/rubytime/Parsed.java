@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 import java.math.BigDecimal;
 import java.time.DateTimeException;
@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * RubyTimeParsed is TimeParsed from Ruby-style date/time formats.
+ * Parsed is a container of date/time information parsed from a string.
  *
  * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
  * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
@@ -24,9 +24,8 @@ import java.util.Map;
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
  */
-class RubyTimeParsed extends TimeParsed {
-    // TODO: Make it private once LegacyRubyTimeParsed is removed.
-    RubyTimeParsed(
+final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
+    private Parsed(
             final String originalString,
 
             final int dayOfMonth,
@@ -100,7 +99,7 @@ class RubyTimeParsed extends TimeParsed {
             this.fail = false;
         }
 
-        RubyTimeParsed build() {
+        Parsed build() {
             // Merge week-based year and century as MRI (Matz' Ruby Implementation) does before generating a hash.
             // See: https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/ext/date/date_strptime.c?view=markup#l676
             final int weekBasedYearWithCentury;
@@ -132,7 +131,7 @@ class RubyTimeParsed extends TimeParsed {
                 hourWithAmPm = this.hour;
             }
 
-            return new RubyTimeParsed(
+            return new Parsed(
                     this.originalString,
 
                     this.dayOfMonth,
@@ -567,6 +566,10 @@ class RubyTimeParsed extends TimeParsed {
         private boolean fail;
     }
 
+    static Builder builder(final String originalString) {
+        return new Builder(originalString);
+    }
+
     /**
      * Creates a java.time.Instant instance basically in the same way with Ruby v2.3.1's Time.strptime.
      *
@@ -577,11 +580,10 @@ class RubyTimeParsed extends TimeParsed {
      *
      * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup#l427">strptime</a>
      */
-    @Override
     Instant toInstant(final ZoneOffset defaultZoneOffset) {
         final ZoneOffset zoneOffset = TimeZoneIds.parseRubyTimeZoneOffset(this.timeZoneName, defaultZoneOffset);
         if (zoneOffset == null) {
-            throw new TimestampParseException(
+            throw new RubyTimeParseException(
                     "Invalid time zone ID '" + this.timeZoneName + "' in '" + this.originalString + "'");
         }
 
@@ -622,26 +624,13 @@ class RubyTimeParsed extends TimeParsed {
         return datetime.toInstant();
     }
 
-    @Override
-    Instant toInstant(final int defaultYear,
-                      final int defaultMonthOfYear,
-                      final int defaultDayOfMonth,
-                      final ZoneId defaultZoneId) {
-        // TODO: Implement it.
-        throw new UnsupportedOperationException("Non-legacy RubyTimeParsed is not implemented.");
-    }
-
     /**
-     * Creates a java.time.Instant instance in legacy Embulk's way from this RubyTimeParsed instance with ZoneId.
-     *
-     * This method is to be called from LegacyRubyTimeParsed to access private fields.
-     *
-     * TODO: Remove this method once legacy Timestamp formats are removed.
+     * Creates a java.time.Instant instance in legacy Embulk's way from this Parsed instance with ZoneId.
      */
-    final Instant toInstantLegacy(final int defaultYear,
-                                  final int defaultMonthOfYear,
-                                  final int defaultDayOfMonth,
-                                  final ZoneId defaultZoneId) {
+    Instant toInstantLegacy(final int defaultYear,
+                            final int defaultMonthOfYear,
+                            final int defaultDayOfMonth,
+                            final ZoneId defaultZoneId) {
         if (this.instantSeconds != null) {
             // Fractions by %Q are prioritized over fractions by %N.
             // irb(main):002:0> Time.strptime("123456789 12.345", "%Q %S.%N").nsec
@@ -663,7 +652,7 @@ class RubyTimeParsed extends TimeParsed {
         if (this.timeZoneName != null) {
             zoneId = TimeZoneIds.parseZoneIdWithJodaAndRubyZoneTab(this.timeZoneName);
             if (zoneId == null) {
-                throw new TimestampParseException(
+                throw new RubyTimeParseException(
                         "Invalid time zone ID '" + this.timeZoneName + "' in '" + this.originalString + "'");
             }
         } else {
@@ -709,37 +698,7 @@ class RubyTimeParsed extends TimeParsed {
         return datetime.toInstant();
     }
 
-    /**
-     * Converts this RubyTimeParsed to LegacyRubyTimeParsed so that it can be converted to Instant in the legacy way.
-     *
-     * TODO: Remove this method once legacy Timestamp formats are removed.
-     */
-    final LegacyRubyTimeParsed toLegacy() {
-        return new LegacyRubyTimeParsed(
-                originalString,
-
-                dayOfMonth,
-                weekBasedYear,
-                hour,
-                dayOfYear,
-                nanoOfSecond,
-                minuteOfHour,
-                monthOfYear,
-                instantSeconds,
-                secondOfMinute,
-                weekOfYearStartingWithSunday,
-                weekOfYearStartingWithMonday,
-                dayOfWeekStartingWithMonday1,
-                weekOfWeekBasedYear,
-                dayOfWeekStartingWithSunday0,
-                year,
-
-                timeZoneName,
-
-                leftover);
-    }
-
-    final Map<String, Object> asMapLikeRubyHash() {
+    Map<String, Object> asMapLikeRubyHash() {
         final HashMap<String, Object> hash = new HashMap<>();
 
         putIntIfValid(hash, "mday", this.dayOfMonth);
@@ -821,7 +780,7 @@ class RubyTimeParsed extends TimeParsed {
                                               int minuteOfHour,
                                               int secondOfMinute,
                                               final int nanoOfSecond,
-                                              final ZoneOffset zoneOffset) throws TimestampParseException {
+                                              final ZoneOffset zoneOffset) throws RubyTimeParseException {
         int offset = zoneOffset.getTotalSeconds();
 
         // Processing leap seconds using time offsets in a bit tricky manner.
@@ -935,7 +894,7 @@ class RubyTimeParsed extends TimeParsed {
                                      hourOfDay, minuteOfHour, secondOfMinute, nanoOfSecond,
                                      ZoneOffset.UTC);
         } catch (DateTimeException ex) {
-            throw new TimestampParseException(ex);
+            throw new RubyTimeParseException(ex);
         }
     }
 

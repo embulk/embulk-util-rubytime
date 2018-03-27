@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.rubytime;
 
 /**
  * RubyTimeZoneTab lists from Ruby-compatible timezone names and their time offsets.
