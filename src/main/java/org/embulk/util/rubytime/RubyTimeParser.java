@@ -281,8 +281,7 @@ class RubyTimeParser {
 
                             final long sec = (negative ? -readDigitsMax() : readDigitsMax());
 
-                            builder.setInstantSeconds(
-                                    Instant.ofEpochSecond(sec / 1000L, sec % 1000L * (long) Math.pow(10, 6)));
+                            builder.setInstantMilliseconds(sec);
                             break;
                         }
                         // %S - Second of the minute (00..59)
@@ -303,7 +302,7 @@ class RubyTimeParser {
                             }
 
                             final long sec = readDigitsMax();
-                            builder.setInstantSeconds(Instant.ofEpochSecond(!negative ? sec : -sec, 0));
+                            builder.setInstantMilliseconds((!negative ? sec : -sec) * 1000);
                             break;
                         }
                         // %U, %OU - Week number of the year.  The week starts with Sunday.  (00..53)
