@@ -21,14 +21,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Parsed is a container of date/time information parsed from a string.
+ * Container of date/time information parsed from a string.
  *
- * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
- * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
+ * <p>It is to store parsed "as-is" date/time information like Ruby's {@code Date._strptime}.
+ * In other words, It does not "resolve" nor "compliment" unspecified fields from other fields.
  *
- * This class is intentionally package-private so that plugins do not directly depend.
+ * @see <a href="http://ruby-doc.org/stdlib-2.5.0/libdoc/date/rdoc/Date.html#method-c-_strptime">Date._strptime</a>
  *
- * A part of this class is reimplementation of Ruby v2.3.1's lib/time.rb. See its COPYING for license.
+ * <p>This class is intentionally package-private to be accessed only through {@code TemporalAccessor}.
+ *
+ * <p>A part of this class is reimplementation of Ruby v2.3.1's lib/time.rb. See its COPYING for license.
  *
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
@@ -730,6 +732,14 @@ final class Parsed implements TemporalAccessor {
                     "Invalid time zone ID '" + this.timeZoneName + "' in '" + this.originalString + "'");
         }
 
+        // *********** ADDITION **************
+        // irb(main):005:0* Date._strptime("123456789 12849124", "%Q %s")
+        // => {:seconds=>12849124}
+        // irb(main):006:0> Date._strptime("123456789 12849124", "%s %Q")
+        // => {:seconds=>(3212281/250)}
+        //
+        // %Q and %s are considered equally. Just later is prioritized.
+
         if (this.instantMilliseconds != Long.MIN_VALUE) {
             // Fractions by %Q are prioritized over fractions by %N.
             // irb(main):002:0> Time.strptime("123456789 12.345", "%Q %S.%N").nsec
@@ -839,74 +849,6 @@ final class Parsed implements TemporalAccessor {
                     zoneId).plusDays(daysRollover);
         }
         return datetime.toInstant();
-    }
-
-    Map<String, Object> asMapLikeRubyHash() {
-        final HashMap<String, Object> hash = new HashMap<>();
-
-        putIntIfValid(hash, "mday", this.dayOfMonth);
-        putIntIfValid(hash, "cwyear", this.weekBasedYear);
-        putIntIfValid(hash, "hour", this.hour);
-        putIntIfValid(hash, "yday", this.dayOfYear);
-        putFractionIfValid(hash, "sec_fraction", this.nanoOfSecond);
-        putIntIfValid(hash, "min", this.minuteOfHour);
-        putIntIfValid(hash, "mon", this.monthOfYear);
-        putSecondWithFractionIfValid(hash, "seconds", this.instantMilliseconds);
-        putIntIfValid(hash, "sec", (this.parsedLeapSecond ? 60 : this.secondOfMinute));
-        putIntIfValid(hash, "wnum0", this.weekOfYearStartingWithSunday);
-        putIntIfValid(hash, "wnum1", this.weekOfYearStartingWithMonday);
-        putIntIfValid(hash, "cwday", this.dayOfWeekStartingWithMonday1);
-        putIntIfValid(hash, "cweek", this.weekOfWeekBasedYear);
-        putIntIfValid(hash, "wday", this.dayOfWeekStartingWithSunday0);
-        putIntIfValid(hash, "year", this.year);
-        putTimeZoneIfValid(hash, this.timeZoneName);
-        putStringIfValid(hash, "leftover", this.leftover);
-
-        return hash;
-    }
-
-    private int putIntIfValid(final Map<String, Object> hash, final String key, final int value) {
-        if (value != Integer.MIN_VALUE) {
-            hash.put(key, value);
-        }
-        return value;
-    }
-
-    private BigDecimal putFractionIfValid(final Map<String, Object> hash, final String key, final int value) {
-        if (value != Integer.MIN_VALUE) {
-            return (BigDecimal) hash.put(key, BigDecimal.ZERO.add(BigDecimal.valueOf(value, 9)));
-        }
-        return null;
-    }
-
-    private Object putSecondWithFractionIfValid(final Map<String, Object> hash, final String key, final long value) {
-        if (value != Long.MIN_VALUE) {
-            if (value % 1000 == 0) {
-                return hash.put(key, value / 1000);
-            } else {
-                return hash.put(key,
-                                BigDecimal.valueOf(value / 1000).add(BigDecimal.valueOf(value % 1000, 3)));
-            }
-        }
-        return null;
-    }
-
-    private String putTimeZoneIfValid(final Map<String, Object> hash, final String timeZoneName) {
-        if (timeZoneName != null) {
-            final int offset = RubyTimeZoneTab.dateZoneToDiff(timeZoneName);
-            if (offset != Integer.MIN_VALUE) {
-                hash.put("offset", offset);
-            }
-            return (String) hash.put("zone", timeZoneName);
-        }
-        return timeZoneName;
-    }
-
-    private String putStringIfValid(final Map<String, Object> hash, final String key, final String value) {
-        if (value != null) {
-            return (String) hash.put(key, value);
-        }
-        return value;
     }
 
     /**
