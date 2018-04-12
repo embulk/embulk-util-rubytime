@@ -81,6 +81,33 @@ public class TestRubyTimeParserWithJRuby {
         assertJRubyTest("TestDateStrptime", "test_sz");
     }
 
+    @Test
+    public void testTestTimeExtension_test_strptime() throws IOException {
+        assertJRubyTest("TestTimeExtension", "test_strptime");
+    }
+
+    @Test
+    public void testTestTimeExtension_test_strptime_empty() throws IOException {
+        assertJRubyTest("TestTimeExtension", "test_strptime_empty");
+    }
+
+    @Test
+    public void testTestTimeExtension_test_strptime_s_z() throws IOException {
+        assertJRubyTest("TestTimeExtension", "test_strptime_s_z");
+    }
+
+    @Ignore("\"strptime_s_N\" is intentionally skipped because it fails on JRuby even without the monkey patch.")
+    @Test
+    public void testTestTimeExtension_test_strptime_s_N() throws IOException {
+        // It tests fractions finer than nanoseconds.
+        assertJRubyTest("TestTimeExtension", "test_strptime_s_N");
+    }
+
+    @Test
+    public void testTestTimeExtension_test_strptime_Ymd_z() throws IOException {
+        assertJRubyTest("TestTimeExtension", "test_strptime_Ymd_z");
+    }
+
     private void assertJRubyTest(final String testcase, final String name) {
         assertTrue(runJRubyTest(testcase, name));
     }
@@ -111,6 +138,7 @@ public class TestRubyTimeParserWithJRuby {
 
         // Require test files from Java resource.
         jruby.runScriptlet("require 'ruby/test/date/test_date_strptime.rb'");
+        jruby.runScriptlet("require 'ruby/test/test_time.rb'");
     }
 
     private static ScriptingContainer jruby;
