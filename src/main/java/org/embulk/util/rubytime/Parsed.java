@@ -144,6 +144,8 @@ final class Parsed implements TemporalAccessor {
             this.chronoFieldValues.put(ChronoField.YEAR, (long) year);  // Not YEAR_OF_ERA.
         }
 
+        // TODO: Parsed should contain "offset" by itself to be consistent with Date._strptime.
+        // This is now done in ParsedElementsQuery to create a Map compatible with Date._strptime.
         this.timeZoneName = timeZoneName;
 
         this.leftover = leftover;
@@ -839,74 +841,6 @@ final class Parsed implements TemporalAccessor {
                     zoneId).plusDays(daysRollover);
         }
         return datetime.toInstant();
-    }
-
-    Map<String, Object> asMapLikeRubyHash() {
-        final HashMap<String, Object> hash = new HashMap<>();
-
-        putIntIfValid(hash, "mday", this.dayOfMonth);
-        putIntIfValid(hash, "cwyear", this.weekBasedYear);
-        putIntIfValid(hash, "hour", this.hour);
-        putIntIfValid(hash, "yday", this.dayOfYear);
-        putFractionIfValid(hash, "sec_fraction", this.nanoOfSecond);
-        putIntIfValid(hash, "min", this.minuteOfHour);
-        putIntIfValid(hash, "mon", this.monthOfYear);
-        putSecondWithFractionIfValid(hash, "seconds", this.instantMilliseconds);
-        putIntIfValid(hash, "sec", (this.parsedLeapSecond ? 60 : this.secondOfMinute));
-        putIntIfValid(hash, "wnum0", this.weekOfYearStartingWithSunday);
-        putIntIfValid(hash, "wnum1", this.weekOfYearStartingWithMonday);
-        putIntIfValid(hash, "cwday", this.dayOfWeekStartingWithMonday1);
-        putIntIfValid(hash, "cweek", this.weekOfWeekBasedYear);
-        putIntIfValid(hash, "wday", this.dayOfWeekStartingWithSunday0);
-        putIntIfValid(hash, "year", this.year);
-        putTimeZoneIfValid(hash, this.timeZoneName);
-        putStringIfValid(hash, "leftover", this.leftover);
-
-        return hash;
-    }
-
-    private int putIntIfValid(final Map<String, Object> hash, final String key, final int value) {
-        if (value != Integer.MIN_VALUE) {
-            hash.put(key, value);
-        }
-        return value;
-    }
-
-    private BigDecimal putFractionIfValid(final Map<String, Object> hash, final String key, final int value) {
-        if (value != Integer.MIN_VALUE) {
-            return (BigDecimal) hash.put(key, BigDecimal.ZERO.add(BigDecimal.valueOf(value, 9)));
-        }
-        return null;
-    }
-
-    private Object putSecondWithFractionIfValid(final Map<String, Object> hash, final String key, final long value) {
-        if (value != Long.MIN_VALUE) {
-            if (value % 1000 == 0) {
-                return hash.put(key, value / 1000);
-            } else {
-                return hash.put(key,
-                                BigDecimal.valueOf(value / 1000).add(BigDecimal.valueOf(value % 1000, 3)));
-            }
-        }
-        return null;
-    }
-
-    private String putTimeZoneIfValid(final Map<String, Object> hash, final String timeZoneName) {
-        if (timeZoneName != null) {
-            final int offset = RubyTimeZoneTab.dateZoneToDiff(timeZoneName);
-            if (offset != Integer.MIN_VALUE) {
-                hash.put("offset", offset);
-            }
-            return (String) hash.put("zone", timeZoneName);
-        }
-        return timeZoneName;
-    }
-
-    private String putStringIfValid(final Map<String, Object> hash, final String key, final String value) {
-        if (value != null) {
-            return (String) hash.put(key, value);
-        }
-        return value;
     }
 
     /**

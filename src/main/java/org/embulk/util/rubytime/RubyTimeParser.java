@@ -1,6 +1,7 @@
 package org.embulk.util.rubytime;
 
 import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +39,7 @@ class RubyTimeParser {
         this.format = format;
     }
 
-    public Parsed parse(final String text) {
+    public TemporalAccessor parse(final String text) {
         return new StringParser(text).parse(this.format);
     }
 
