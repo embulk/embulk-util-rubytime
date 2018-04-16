@@ -131,10 +131,14 @@ public class TestRubyTimeParserWithJRuby {
         config.processArguments(arguments);
 
         jruby.runScriptlet("require 'date'");
+        jruby.runScriptlet("require 'time'");
         jruby.runScriptlet("require 'test/unit'");
         jruby.runScriptlet(
                 TestRubyTimeParserWithJRuby.class.getClassLoader().getResourceAsStream("date_monkey_patch.rb"),
                 "date_monkey_patch.rb");
+        jruby.runScriptlet(
+                TestRubyTimeParserWithJRuby.class.getClassLoader().getResourceAsStream("time_monkey_patch.rb"),
+                "time_monkey_patch.rb");
 
         // Require test files from Java resource.
         jruby.runScriptlet("require 'ruby/test/date/test_date_strptime.rb'");
