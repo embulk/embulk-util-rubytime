@@ -4,10 +4,19 @@ import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalField;
+import java.time.temporal.TemporalQuery;
+import java.time.temporal.UnsupportedTemporalTypeException;
+import java.time.temporal.ValueRange;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +33,7 @@ import java.util.Map;
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
  */
-final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
+final class Parsed implements TemporalAccessor {
     private Parsed(
             final String originalString,
 
@@ -35,7 +44,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
             final int nanoOfSecond,
             final int minuteOfHour,
             final int monthOfYear,
-            final Instant instantSeconds,
+            final long instantMilliseconds,
             final int secondOfMinute,
             final int weekOfYearStartingWithSunday,
             final int weekOfYearStartingWithMonday,
@@ -46,28 +55,101 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
 
             final String timeZoneName,
 
-            final String leftover) {
+            final String leftover,
+
+            final Period parsedExcessDays,
+            final boolean parsedLeapSecond) {
         this.originalString = originalString;
 
+        this.chronoFieldValues = new EnumMap<>(ChronoField.class);
+        this.rubyChronoFieldValues = new EnumMap<>(RubyChronoField.Field.class);
+
         this.dayOfMonth = dayOfMonth;
+        if (dayOfMonth > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.DAY_OF_MONTH, (long) dayOfMonth);
+        }
+
         this.weekBasedYear = weekBasedYear;
+        if (weekBasedYear > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_BASED_YEAR, (long) weekBasedYear);
+        }
+
         this.hour = hour;
+        if (hour > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.HOUR_OF_DAY, (long) hour);
+        }
+
         this.dayOfYear = dayOfYear;
+        if (dayOfYear > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.DAY_OF_YEAR, (long) dayOfYear);
+        }
+
         this.nanoOfSecond = nanoOfSecond;
+        if (nanoOfSecond > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.NANO_OF_SECOND, (long) nanoOfSecond);
+        }
+
         this.minuteOfHour = minuteOfHour;
+        if (minuteOfHour > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.MINUTE_OF_HOUR, (long) minuteOfHour);
+        }
+
         this.monthOfYear = monthOfYear;
-        this.instantSeconds = instantSeconds;
+        if (monthOfYear > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.MONTH_OF_YEAR, (long) monthOfYear);
+        }
+
+        this.instantMilliseconds = instantMilliseconds;
+        if (instantMilliseconds > Long.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.INSTANT_MILLIS, instantMilliseconds);
+        }
+
         this.secondOfMinute = secondOfMinute;
+        if (secondOfMinute > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.SECOND_OF_MINUTE, (long) secondOfMinute);
+        }
+
         this.weekOfYearStartingWithSunday = weekOfYearStartingWithSunday;
+        if (weekOfYearStartingWithSunday > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_OF_YEAR_STARTING_WITH_SUNDAY,
+                                           (long) weekOfYearStartingWithSunday);
+        }
+
         this.weekOfYearStartingWithMonday = weekOfYearStartingWithMonday;
+        if (weekOfYearStartingWithMonday > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_OF_YEAR_STARTING_WITH_MONDAY,
+                                           (long) weekOfYearStartingWithMonday);
+        }
+
         this.dayOfWeekStartingWithMonday1 = dayOfWeekStartingWithMonday1;
+        if (dayOfWeekStartingWithMonday1 > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.DAY_OF_WEEK_STARTING_WITH_MONDAY_1,
+                                           (long) dayOfWeekStartingWithMonday1);
+        }
+
         this.weekOfWeekBasedYear = weekOfWeekBasedYear;
+        if (weekOfWeekBasedYear > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_OF_WEEK_BASED_YEAR,
+                                           (long) weekOfWeekBasedYear);
+        }
+
         this.dayOfWeekStartingWithSunday0 = dayOfWeekStartingWithSunday0;
+        if (dayOfWeekStartingWithSunday0 > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoField.Field.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0,
+                                           (long) dayOfWeekStartingWithSunday0);
+        }
+
         this.year = year;
+        if (year > Integer.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.YEAR, (long) year);  // Not YEAR_OF_ERA.
+        }
 
         this.timeZoneName = timeZoneName;
 
         this.leftover = leftover;
+
+        this.parsedExcessDays = parsedExcessDays;
+        this.parsedLeapSecond = parsedLeapSecond;
     }
 
     static class Builder {
@@ -83,7 +165,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
             this.minuteOfHour = Integer.MIN_VALUE;
             this.monthOfYear = Integer.MIN_VALUE;
             this.ampmOfDay = Integer.MIN_VALUE;
-            this.instantSeconds = null;
+            this.instantMilliseconds = Long.MIN_VALUE;
             this.secondOfMinute = Integer.MIN_VALUE;
             this.weekOfYearStartingWithSunday = Integer.MIN_VALUE;
             this.weekOfYearStartingWithMonday = Integer.MIN_VALUE;
@@ -125,10 +207,16 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
             // Merge hour and ampmOfDay as MRI (Matz' Ruby Implementation) does before generating a hash.
             // See: https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/ext/date/date_strptime.c?view=markup#l685
             final int hourWithAmPm;
+            final Period parsedExcessDays;
             if (this.hour != Integer.MIN_VALUE && this.ampmOfDay != Integer.MIN_VALUE) {
                 hourWithAmPm = (this.hour % 12) + this.ampmOfDay;
+                parsedExcessDays = null;
+            } else if (this.hour == 24) {
+                hourWithAmPm = 0;
+                parsedExcessDays = Period.ofDays(1);;
             } else {
                 hourWithAmPm = this.hour;
+                parsedExcessDays = null;
             }
 
             return new Parsed(
@@ -141,8 +229,8 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
                     this.nanoOfSecond,
                     this.minuteOfHour,
                     this.monthOfYear,
-                    this.instantSeconds,
-                    this.secondOfMinute,
+                    this.instantMilliseconds,
+                    (this.secondOfMinute == 60 ? 59 : this.secondOfMinute),
                     this.weekOfYearStartingWithSunday,
                     this.weekOfYearStartingWithMonday,
                     this.dayOfWeekStartingWithMonday1,
@@ -152,7 +240,10 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
 
                     this.timeZoneName,
 
-                    this.leftover);
+                    this.leftover,
+
+                    parsedExcessDays,
+                    this.secondOfMinute == 60);
         }
 
         /**
@@ -346,11 +437,11 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
          * <ul>
          * <li> Ruby Date._strptime hash key corresponding: seconds
          * <li> Ruby strptime directive specifier related: %Q, %s
-         * <li> java.time.temporal: ChronoField.INSTANT_SECONDS
+         * <li> java.time.temporal: RubyChronoField.INSTANT_MILLIS
          * </ul>
          */
-        Builder setInstantSeconds(final Instant instantSeconds) {
-            this.instantSeconds = instantSeconds;
+        Builder setInstantMilliseconds(final long instantMilliseconds) {
+            this.instantMilliseconds = instantMilliseconds;
             return this;
         }
 
@@ -550,7 +641,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
         private int minuteOfHour;
         private int monthOfYear;
         private int ampmOfDay;
-        private Instant instantSeconds;
+        private long instantMilliseconds;
         private int secondOfMinute;
         private int weekOfYearStartingWithSunday;
         private int weekOfYearStartingWithMonday;
@@ -570,6 +661,58 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
         return new Builder(originalString);
     }
 
+    @Override
+    public long getLong(final TemporalField field) {
+        if (field instanceof ChronoField) {
+            final Long value = this.chronoFieldValues.get(field);
+            if (value == null) {
+                throw new UnsupportedTemporalTypeException("");
+            }
+            return (long) value;
+        } else if (field instanceof RubyChronoField.Field) {
+            final Long value = this.rubyChronoFieldValues.get(field);
+            if (value == null) {
+                throw new UnsupportedTemporalTypeException("");
+            }
+            return (long) value;
+        }
+        throw new UnsupportedTemporalTypeException("");
+    }
+
+    @Override
+    public boolean isSupported(final TemporalField field) {
+        if (field instanceof ChronoField) {
+            return this.chronoFieldValues.containsKey(field);
+        } else if (field instanceof RubyChronoField.Field) {
+            return this.rubyChronoFieldValues.containsKey(field);
+        }
+        throw new UnsupportedTemporalTypeException("");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R> R query(final TemporalQuery<R> query) {
+        if (query == DateTimeFormatter.parsedExcessDays()) {
+            return (R) this.parsedExcessDays;
+        } else if (query == DateTimeFormatter.parsedLeapSecond()) {
+            return (R) ((Boolean) this.parsedLeapSecond);
+        } else if (query == RubyTemporalQueries.rubyTimeZone()) {
+            return (R) this.timeZoneName;
+        } else if (query == RubyTemporalQueries.leftover()) {
+            return (R) this.leftover;
+        } else {
+            return TemporalAccessor.super.query(query);
+        }
+    }
+
+    @Override
+    public ValueRange range(final TemporalField field) {
+        if (field instanceof RubyChronoField.Field && isSupported(field)) {
+            return field.range();
+        }
+        return TemporalAccessor.super.range(field);
+    }
+
     /**
      * Creates a java.time.Instant instance basically in the same way with Ruby v2.3.1's Time.strptime.
      *
@@ -587,7 +730,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
                     "Invalid time zone ID '" + this.timeZoneName + "' in '" + this.originalString + "'");
         }
 
-        if (this.instantSeconds != null) {
+        if (this.instantMilliseconds != Long.MIN_VALUE) {
             // Fractions by %Q are prioritized over fractions by %N.
             // irb(main):002:0> Time.strptime("123456789 12.345", "%Q %S.%N").nsec
             // => 789000000
@@ -601,7 +744,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
             if (this.timeZoneName != null) {
                 // TODO: Warn that the epoch second has a time zone.
             }
-            return this.instantSeconds;
+            return Instant.ofEpochMilli(this.instantMilliseconds);
         }
 
         // Day of the year (yday: DAY_OF_YEAR) is not considered in Time.strptime, not like DateTime.strptime.
@@ -631,7 +774,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
                             final int defaultMonthOfYear,
                             final int defaultDayOfMonth,
                             final ZoneId defaultZoneId) {
-        if (this.instantSeconds != null) {
+        if (this.instantMilliseconds != Long.MIN_VALUE) {
             // Fractions by %Q are prioritized over fractions by %N.
             // irb(main):002:0> Time.strptime("123456789 12.345", "%Q %S.%N").nsec
             // => 789000000
@@ -645,7 +788,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
             if (this.timeZoneName != null) {
                 // TODO: Warn that the epoch second has a time zone.
             }
-            return this.instantSeconds;
+            return Instant.ofEpochMilli(this.instantMilliseconds);
         }
 
         final ZoneId zoneId;
@@ -708,8 +851,8 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
         putFractionIfValid(hash, "sec_fraction", this.nanoOfSecond);
         putIntIfValid(hash, "min", this.minuteOfHour);
         putIntIfValid(hash, "mon", this.monthOfYear);
-        putSecondWithFractionIfValid(hash, "seconds", this.instantSeconds);
-        putIntIfValid(hash, "sec", this.secondOfMinute);
+        putSecondWithFractionIfValid(hash, "seconds", this.instantMilliseconds);
+        putIntIfValid(hash, "sec", (this.parsedLeapSecond ? 60 : this.secondOfMinute));
         putIntIfValid(hash, "wnum0", this.weekOfYearStartingWithSunday);
         putIntIfValid(hash, "wnum1", this.weekOfYearStartingWithMonday);
         putIntIfValid(hash, "cwday", this.dayOfWeekStartingWithMonday1);
@@ -736,13 +879,13 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
         return null;
     }
 
-    private Object putSecondWithFractionIfValid(final Map<String, Object> hash, final String key, final Instant value) {
-        if (value != null) {
-            if (value.getNano() == 0) {
-                return hash.put(key, value.getEpochSecond());
+    private Object putSecondWithFractionIfValid(final Map<String, Object> hash, final String key, final long value) {
+        if (value != Long.MIN_VALUE) {
+            if (value % 1000 == 0) {
+                return hash.put(key, value / 1000);
             } else {
                 return hash.put(key,
-                                BigDecimal.valueOf(value.getEpochSecond()).add(BigDecimal.valueOf(value.getNano(), 9)));
+                                BigDecimal.valueOf(value / 1000).add(BigDecimal.valueOf(value % 1000, 3)));
             }
         }
         return null;
@@ -915,6 +1058,9 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
 
     private final String originalString;
 
+    private final EnumMap<ChronoField, Long> chronoFieldValues;
+    private final EnumMap<RubyChronoField.Field, Long> rubyChronoFieldValues;
+
     private final int dayOfMonth;
     private final int weekBasedYear;
     private final int hour;
@@ -922,7 +1068,7 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
     private final int nanoOfSecond;
     private final int minuteOfHour;
     private final int monthOfYear;
-    private final Instant instantSeconds;
+    private final long instantMilliseconds;
     private final int secondOfMinute;
     private final int weekOfYearStartingWithSunday;
     private final int weekOfYearStartingWithMonday;
@@ -934,6 +1080,9 @@ final class Parsed {  // to extend java.time.temporal.TemporalAccessor in Java 8
     private final String timeZoneName;
 
     private final String leftover;
+
+    private final Period parsedExcessDays;
+    private final boolean parsedLeapSecond;
 
     /**
      * Numbers of days per month and year.
