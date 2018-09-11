@@ -22,17 +22,26 @@ import java.time.temporal.ValueRange;
  *
  * @see <a href="https://docs.ruby-lang.org/en/2.5.0/DateTime.html#class-DateTime-label-When+should+you+use+DateTime+and+when+should+you+use+Time-3F">When should you use DateTime and when should you use Time?</a>
  *
- * <p>A fraction from epoch milliseconds (%Q) is prioritized over fraction part of seconds (%N).
+ * <p>Epoch seconds (%s) and epoch milliseconds (%Q) are prioritized over calendar date/time although
+ * fraction part (%L/%N) is added to the epoch seconds/milliseconds.
  *
  * <pre>{@code
  * irb(main):001:0> require 'time'
  * => true
  * irb(main):002:0> Time.strptime("123456789 12.345", "%Q %S.%N").nsec
- * => 789000000
+ * => 134000000
  * irb(main):003:0> Time.strptime("12.345 123456789", "%S.%N %Q").nsec
- * => 789000000
+ * => 134000000
  * irb(main):004:0> Time.strptime("12.345", "%S.%N").nsec
  * => 345000000
+ * irb(main):005:0> Time.strptime("1500000000.123456789", "%s.%N").nsec
+ * => 123456789
+ * irb(main):006:0> Time.strptime("1500000000456.111111111", "%Q.%N").nsec
+ * => 567111111
+ * irb(main):007:0> Time.strptime("1500000000.123", "%s.%L").nsec
+ * => 123000000
+ * irb(main):008:0> Time.strptime("1500000000456.111", "%Q.%L").nsec
+ * => 567000000
  * }
  * </pre>
  *
@@ -80,8 +89,9 @@ public class DefaultRubyTimeResolver implements RubyTimeResolver {
         return new DefaultRubyTimeResolver(true, ZoneOffset.UTC, 1970, 1, 1, 0, 0, 0, 0);
     }
 
-    private class Resolved implements TemporalAccessor {
-        private Resolved(
+    // TODO(dmikurube): Confirm whether prioritizing |original| over |resolved| is really correct.
+    private class ResolvedFromOffsetDateTime implements TemporalAccessor {
+        private ResolvedFromOffsetDateTime(
                 final TemporalAccessor original,
                 final OffsetDateTime resolvedDateTime) {
             this.original = original;
@@ -125,6 +135,49 @@ public class DefaultRubyTimeResolver implements RubyTimeResolver {
         private final OffsetDateTime resolvedDateTime;
     }
 
+    private class ResolvedFromInstant implements TemporalAccessor {
+        private ResolvedFromInstant(final Instant resolvedInstant) {
+            this.resolvedInstant = resolvedInstant;
+            this.resolvedDateTime = OffsetDateTime.ofInstant(resolvedInstant, ZoneOffset.UTC);
+        }
+
+        @Override
+        public long getLong(final TemporalField field) {
+            if (this.resolvedInstant.isSupported(field)) {
+                return this.resolvedInstant.getLong(field);
+            }
+            return this.resolvedDateTime.getLong(field);
+        }
+
+        @Override
+        public boolean isSupported(final TemporalField field) {
+            if (this.resolvedInstant.isSupported(field)) {
+                return true;
+            }
+            return this.resolvedDateTime.isSupported(field);
+        }
+
+        @Override
+        public <R> R query(final TemporalQuery<R> query) {
+            final R resultFromResolvedInstant = this.resolvedInstant.query(query);
+            if (resultFromResolvedInstant != null) {
+                return resultFromResolvedInstant;
+            }
+            return this.resolvedDateTime.query(query);
+        }
+
+        @Override
+        public ValueRange range(final TemporalField field) {
+            if (this.resolvedInstant.isSupported(field)) {
+                return this.resolvedInstant.range(field);
+            }
+            return this.resolvedDateTime.range(field);
+        }
+
+        private final Instant resolvedInstant;
+        private final OffsetDateTime resolvedDateTime;
+    }
+
     @Override
     public TemporalAccessor resolve(final TemporalAccessor original) throws RubyTimeResolveException {
         final String zone = original.query(RubyTemporalQueries.rubyTimeZone());
@@ -147,6 +200,33 @@ public class DefaultRubyTimeResolver implements RubyTimeResolver {
                 instantMilliseconds = original.getLong(ChronoField.INSTANT_SECONDS) * 1000;
             }
 
+            final Instant instant;
+            if (original.isSupported(ChronoField.NANO_OF_SECOND)) {
+                // The fraction part is "added" to the epoch second in case both are specified.
+                // irb(main):002:0> Time.strptime("1500000000.123456789", "%s.%N").nsec
+                // => 123456789
+                // irb(main):003:0> Time.strptime("1500000000456.111111111", "%Q.%N").nsec
+                // => 567111111
+                //
+                // If "sec_fraction" is specified, the value is used like |Time.at(seconds, sec_fraction * 1000000)|.
+                // https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l431
+                //
+                // |Time.at| adds "seconds" (the epoch) and "sec_fraction" (the fraction part) with scaling.
+                // https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/time.c?view=markup#l2405
+                //
+                // It behaves the same even if "seconds" is specified as a Rational, not an Integer.
+                // irb(main):004:0> Time.at(Rational(1500000000789, 1000), 100123).nsec
+                // => 889123000
+                final int nanoOfSecond = original.get(ChronoField.NANO_OF_SECOND);
+                if (instantMilliseconds >= 0) {
+                    instant = Instant.ofEpochMilli(instantMilliseconds).plusNanos(nanoOfSecond);
+                } else {
+                    instant = Instant.ofEpochMilli(instantMilliseconds).minusNanos(nanoOfSecond);
+                }
+            } else {
+                instant = Instant.ofEpochMilli(instantMilliseconds);
+            }
+
             // TODO: Store the zone offset information in Resolved, instead of ZoneOffset.UTC.
             //
             // INSTANT_SECONDS by itself is always a value as of UTC, but results of
@@ -158,12 +238,10 @@ public class DefaultRubyTimeResolver implements RubyTimeResolver {
             //    assert_equal(3600, t.utc_offset)
             //
             // The test is working-around it by getting zone offset from Parsed, not Resolved.
-            return new Resolved(
-                    original,
-                    OffsetDateTime.ofInstant(Instant.ofEpochMilli(instantMilliseconds), ZoneOffset.UTC));
+            return new ResolvedFromInstant(instant);
         }
 
-        return new Resolved(original, this.getOffsetAppliedDateTime(original, offset));
+        return new ResolvedFromOffsetDateTime(original, this.getOffsetAppliedDateTime(original, offset));
     }
 
     /**
