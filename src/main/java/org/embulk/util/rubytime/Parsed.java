@@ -21,17 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Parsed is a container of date/time information parsed from a string.
+ * Contains date/time information parsed from a String.
  *
- * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
- * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
+ * <p>It stores "as-is" parsed date/time information like Ruby's {@code Date._strptime}. In other words,
+ * It does not "resolve" nor "compliment" any unspecified field from other specified fields or default values.
  *
- * This class is intentionally package-private so that plugins do not directly depend.
- *
- * A part of this class is reimplementation of Ruby v2.3.1's lib/time.rb. See its COPYING for license.
- *
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
+ * @see <a href="http://ruby-doc.org/stdlib-2.5.0/libdoc/date/rdoc/Date.html#method-c-_strptime">Date._strptime</a>
  */
 final class Parsed implements TemporalAccessor {
     private Parsed(
