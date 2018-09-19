@@ -1,11 +1,11 @@
 package org.embulk.util.rubytime;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.jruby.RubyInstanceConfig;
 import org.jruby.embed.ScriptingContainer;
 import org.jruby.embed.LocalContextScope;
@@ -75,7 +75,7 @@ public class TestRubyTimeParserWithJRuby {
         assertJRubyTest("TestDateStrptime", "test_given_string");
     }
 
-    @Ignore("\"test_sz\" is intentionally skipped because it fails on JRuby even without the monkey patch.")
+    @Disabled("\"test_sz\" is intentionally skipped because it fails on JRuby even without the monkey patch.")
     @Test
     public void testDateStrptime_test_sz() throws IOException {
         assertJRubyTest("TestDateStrptime", "test_sz");
@@ -96,7 +96,7 @@ public class TestRubyTimeParserWithJRuby {
         assertJRubyTest("TestTimeExtension", "test_strptime_s_z");
     }
 
-    @Ignore("\"strptime_s_N\" is intentionally skipped because it fails on JRuby even without the monkey patch.")
+    @Disabled("\"strptime_s_N\" is intentionally skipped because it fails on JRuby even without the monkey patch.")
     @Test
     public void testTestTimeExtension_test_strptime_s_N() throws IOException {
         // It tests fractions finer than nanoseconds.
@@ -122,7 +122,7 @@ public class TestRubyTimeParserWithJRuby {
         return (Boolean) jruby.runScriptlet(scriptlet);
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void loadJRubyScriptingContainerWithMonkeyPatch() throws IOException {
         jruby = new ScriptingContainer(LocalContextScope.SINGLETHREAD, LocalVariableBehavior.PERSISTENT);
 
