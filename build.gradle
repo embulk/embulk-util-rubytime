@@ -16,11 +16,14 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    testCompile "junit:junit:4.12"
     testCompile "org.jruby:jruby-complete:9.1.15.0"
+    testCompile "org.junit.jupiter:junit-jupiter-api:5.3.1"
+
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.1"
 }
 
 test {
+    useJUnitPlatform()
     testLogging {
         outputs.upToDateWhen { false }
         showStandardStreams = true
