@@ -16,7 +16,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    testCompile "org.jruby:jruby-complete:9.1.15.0"
+    testCompile "org.jruby:jruby-complete:9.2.0.0"
     testCompile "org.junit.jupiter:junit-jupiter-api:5.3.1"
 
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.1"
