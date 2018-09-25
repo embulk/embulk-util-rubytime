@@ -6,6 +6,9 @@ import java.io.IOException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import org.jruby.RubyInstanceConfig;
 import org.jruby.embed.ScriptingContainer;
 import org.jruby.embed.LocalContextScope;
@@ -123,16 +126,22 @@ public class TestRubyTimeParserWithJRuby {
     }
 
     @BeforeAll
-    public static void loadJRubyScriptingContainerWithMonkeyPatch() throws IOException {
+    public static void loadJRubyScriptingContainerWithMonkeyPatch() throws IOException, URISyntaxException {
         jruby = new ScriptingContainer(LocalContextScope.SINGLETHREAD, LocalVariableBehavior.PERSISTENT);
 
         final RubyInstanceConfig config = jruby.getProvider().getRubyInstanceConfig();
         final String[] arguments = { "--debug" };
         config.processArguments(arguments);
 
+        final URL gemsDirUrl = TestRubyTimeParserWithJRuby.class.getClassLoader().getResource("third_party/gems");
+        final URI gemsDirUri = gemsDirUrl.toURI();
+        final String gemsDir = gemsDirUri.getPath();
+
+        jruby.runScriptlet("Gem.use_paths('" + gemsDir + "')");
         jruby.runScriptlet("require 'date'");
         jruby.runScriptlet("require 'time'");
         jruby.runScriptlet("require 'test/unit'");
+
         jruby.runScriptlet(
                 TestRubyTimeParserWithJRuby.class.getClassLoader().getResourceAsStream("date_monkey_patch.rb"),
                 "date_monkey_patch.rb");

@@ -1,0 +1,16 @@
+embulk-util-rubytime
+Copyright 2018 The Embulk Project
+
+This product includes software from the test-unit project.
+* Copyright (c) Kouhei Sutou <kou@cozmixng.org>, Ryan Davis <ryand-ruby@zenspider.com> and Nathaniel Talbott <nathaniel@talbott.ws>
+* https://github.com/test-unit/test-unit
+* Licensed under the GPL version 2
+* The test-unit project is used only for testing this product.
+* The binary distribution of this product does not include test-unit.
+
+This product includes software from the power_assert project.
+* Copyright (C) 2014 Kazuki Tsujimoto
+* https://github.com/k-tsj/power_assert
+* Licensed under the 2-clause BSDL
+* The power_assert project is used only for testing this product.
+* The binary distribution of this product does not include power_assert.
