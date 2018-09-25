@@ -27,7 +27,7 @@ module TimeMonkeyPatch
 
         # TODO: Get the zone offset directly from the resolved object, not from the parsed object.
         zone_string = parsed.query(Java::org.embulk.util.rubytime.RubyTemporalQueries.rubyTimeZone())
-        offset = Java::org.embulk.util.rubytime.TimeZoneIds.parseRubyTimeZoneOffset(
+        offset = Java::org.embulk.util.rubytime.TimeZones.toZoneOffset(
           zone_string, Java::java.time.ZoneOffset::UTC).getTotalSeconds()
 
         # Workaround against difference in handling "UTC" between Matz' Ruby Implementation (MRI) and JRuby.
