@@ -1,0 +1,75 @@
+package org.embulk.util.rubytime;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+class CRubyCaller {
+    CRubyCaller(final String rubyPath) {
+        this.rubyPath = rubyPath;
+    }
+
+    CRubyCaller() {
+        this("ruby");
+    }
+
+    String getSingleLineFromOneLiner(final String oneLine) throws IOException, InterruptedException {
+        final List<String> result = this.callOneLiner(oneLine);
+        assertEquals(1, result.size());
+        return result.get(0);
+    }
+
+    List<String> callOneLiner(final String oneLine) throws IOException, InterruptedException {
+        final String oneLineEscaped = oneLine.replaceAll("\'", "\\\'");
+        final ProcessBuilder processBuilder = new ProcessBuilder(this.rubyPath, "-e", oneLineEscaped);
+        final Map<String, String> environment = processBuilder.environment();
+        environment.put("TZ", "UTC");
+
+        final Process process = processBuilder.start();  // IOException possibly.
+        final int exitStatus = process.waitFor();  // InterruptedException possibly.
+
+        final byte[] buffer = new byte[8192];
+
+        final ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+        final InputStream stderrInputStream = process.getErrorStream();
+        while (true) {
+            final int lengthRead = stderrInputStream.read(buffer);
+            if (0 > lengthRead) {
+                break;
+            }
+            stderr.write(buffer, 0, lengthRead);
+        }
+
+        if (stderr.size() > 0) {
+            final ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            final InputStream stdoutInputStream = process.getInputStream();
+            while (true) {
+                final int lengthRead = stdoutInputStream.read(buffer);
+                if (0 > lengthRead) {
+                    break;
+                }
+                stdout.write(buffer, 0, lengthRead);
+            }
+            throw new RuntimeException(
+                    "Detected output in standard error.\n" +
+                    "stdout: " + stdout.toString() + "\n" +
+                    "stderr: " + stderr.toString());
+        }
+
+        final InputStream stdout = process.getInputStream();
+        final List<String> lines;
+        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(stdout))) {
+            lines = reader.lines().collect(Collectors.toList());
+        }
+        return lines;
+    }
+
+    private final String rubyPath;
+}

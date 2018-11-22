@@ -81,7 +81,7 @@ public class TimeZoneIds {
         try {
             return ZoneId.of(zoneId, ALIAS_ZONE_IDS_FOR_LEGACY);  // Is is never null unless Exception is thrown.
         } catch (DateTimeException ex) {
-            final int rubyStyleTimeOffsetInSecond = RubyTimeZoneTab.dateZoneToDiff(zoneId);
+            final int rubyStyleTimeOffsetInSecond = DateZones.toOffsetInSeconds(zoneId);
             if (rubyStyleTimeOffsetInSecond != Integer.MIN_VALUE) {
                 return ZoneOffset.ofTotalSeconds(rubyStyleTimeOffsetInSecond);
             }

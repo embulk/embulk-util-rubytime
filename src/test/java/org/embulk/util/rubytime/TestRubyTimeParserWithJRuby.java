@@ -137,6 +137,7 @@ public class TestRubyTimeParserWithJRuby {
         final URI gemsDirUri = gemsDirUrl.toURI();
         final String gemsDir = gemsDirUri.getPath();
 
+        jruby.runScriptlet("ENV['TZ'] = 'UTC'");
         jruby.runScriptlet("Gem.use_paths('" + gemsDir + "')");
         jruby.runScriptlet("require 'date'");
         jruby.runScriptlet("require 'time'");

@@ -138,7 +138,7 @@ public class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
         private void putTimeZone() {
             final String zone = temporal.query(RubyTemporalQueries.rubyTimeZone());
             if (zone != null) {
-                final int offset = RubyTimeZoneTab.dateZoneToDiff(zone);
+                final int offset = DateZones.toOffsetInSeconds(zone);
                 if (offset != Integer.MIN_VALUE) {
                     this.built.put(this.hashKeyConverter.convertHashKey("offset"), offset);
                 }
