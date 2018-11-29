@@ -6,10 +6,9 @@ module DateMonkeyPatch
   def self.included base
     base.instance_eval do
       def _strptime(str, fmt='%F')
-        parser = Java::org.embulk.util.rubytime.RubyTimeParser.new(
-          Java::org.embulk.util.rubytime.RubyTimeFormat.compile(fmt))
+        formatter = Java::org.embulk.util.rubytime.RubyDateTimeFormatter.ofPattern(fmt)
 
-        parsed = parser.parse(str)
+        parsed = formatter.parseUnresolved(str)
         if parsed.nil?
           return nil
         end

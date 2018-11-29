@@ -15,9 +15,9 @@ import org.jruby.embed.LocalContextScope;
 import org.jruby.embed.LocalVariableBehavior;
 
 /**
- * Tests RubyTimeParser with JRuby.
+ * Tests parsing by RubyDateTimeFormatter with JRuby.
  */
-public class TestRubyTimeParserWithJRuby {
+public class TestRubyDateTimeFormatterParseWithJRuby {
     @Test
     public void testDateStrptime_test__strptime() throws IOException {
         assertJRubyTest("TestDateStrptime", "test__strptime");
@@ -133,7 +133,7 @@ public class TestRubyTimeParserWithJRuby {
         final String[] arguments = { "--debug" };
         config.processArguments(arguments);
 
-        final URL gemsDirUrl = TestRubyTimeParserWithJRuby.class.getClassLoader().getResource("third_party/gems");
+        final URL gemsDirUrl = TestRubyDateTimeFormatterParseWithJRuby.class.getClassLoader().getResource("third_party/gems");
         final URI gemsDirUri = gemsDirUrl.toURI();
         final String gemsDir = gemsDirUri.getPath();
 
@@ -144,10 +144,10 @@ public class TestRubyTimeParserWithJRuby {
         jruby.runScriptlet("require 'test/unit'");
 
         jruby.runScriptlet(
-                TestRubyTimeParserWithJRuby.class.getClassLoader().getResourceAsStream("date_monkey_patch.rb"),
+                TestRubyDateTimeFormatterParseWithJRuby.class.getClassLoader().getResourceAsStream("date_monkey_patch.rb"),
                 "date_monkey_patch.rb");
         jruby.runScriptlet(
-                TestRubyTimeParserWithJRuby.class.getClassLoader().getResourceAsStream("time_monkey_patch.rb"),
+                TestRubyDateTimeFormatterParseWithJRuby.class.getClassLoader().getResourceAsStream("time_monkey_patch.rb"),
                 "time_monkey_patch.rb");
 
         // Require test files from Java resource.

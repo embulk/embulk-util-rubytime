@@ -6,10 +6,9 @@ module TimeMonkeyPatch
   def self.included base
     base.instance_eval do
       def strptime(date, format)
-        parser = Java::org.embulk.util.rubytime.RubyTimeParser.new(
-          Java::org.embulk.util.rubytime.RubyTimeFormat.compile(format))
+        formatter = Java::org.embulk.util.rubytime.RubyDateTimeFormatter.ofPattern(format)
 
-        parsed = parser.parse(date)
+        parsed = formatter.parseUnresolved(date)
         if parsed.nil?
           return nil
         end
