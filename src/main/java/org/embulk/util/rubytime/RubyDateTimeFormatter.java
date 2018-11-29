@@ -16,7 +16,7 @@ import java.time.temporal.TemporalAccessor;
  * => {:seconds=>(3212281/250)}
  * </code>
  */
-public class RubyDateTimeFormatter {
+public final class RubyDateTimeFormatter {
     private RubyDateTimeFormatter(final RubyTimeFormat format) {
         this.format = format;
     }
