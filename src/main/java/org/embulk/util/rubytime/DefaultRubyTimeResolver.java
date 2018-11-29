@@ -13,7 +13,7 @@ import java.time.temporal.TemporalQuery;
 import java.time.temporal.ValueRange;
 
 /**
- * Resolves date/time from TemporalAccessor parsed by RubyTimeParser by the same rule as Ruby's Time.strptime.
+ * Resolves date/time from TemporalAccessor parsed by RubyDateTimeFormatter by the same rule as Ruby's Time.strptime.
  *
  * <p>A difference from Ruby's {@code Time.strptime} is that it does not consider "now" and local time zone.
  * If the given zone is neither numerical nor predefined textual time zones, it returns defaultZoneOffset then.
