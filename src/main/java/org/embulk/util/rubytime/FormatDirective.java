@@ -8,16 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * RubyTimeFormatDirective enumerates constants to represent Ruby-compatible time format directives.
- *
- * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
- * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
- *
- * This class is intentionally package-private so that plugins do not directly depend.
+ * Enumerates constants to represent Ruby-compatible date-time format directives.
  *
  * @see <a href="https://docs.ruby-lang.org/en/2.4.0/Time.html#method-i-strftime">Ruby v2.4.0's datetime format</a>
  */
-enum RubyTimeFormatDirective {
+enum FormatDirective {
     // Date (Year, Month, Day):
 
     YEAR_WITH_CENTURY(true, 'Y'),
@@ -99,21 +94,21 @@ enum RubyTimeFormatDirective {
     RECURRED_PLUS('+', "a b e H:M:S Z Y"),
     ;
 
-    private RubyTimeFormatDirective(final boolean isNumeric, final char conversionSpecifier) {
+    private FormatDirective(final boolean isNumeric, final char conversionSpecifier) {
         this.conversionSpecifier = conversionSpecifier;
         this.isNumeric = isNumeric;
         this.isRecurred = false;
         this.recurred = null;
     }
 
-    private RubyTimeFormatDirective(final char conversionSpecifier, final String recurred) {
+    private FormatDirective(final char conversionSpecifier, final String recurred) {
         this.conversionSpecifier = conversionSpecifier;
         this.isNumeric = false;
         this.isRecurred = true;
         this.recurred = recurred;
     }
 
-    private RubyTimeFormatDirective() {
+    private FormatDirective() {
         this(false, '\0');
     }
 
@@ -121,7 +116,7 @@ enum RubyTimeFormatDirective {
         return FROM_CONVERSION_SPECIFIER.containsKey(conversionSpecifier);
     }
 
-    static RubyTimeFormatDirective of(final char conversionSpecifier) {
+    static FormatDirective of(final char conversionSpecifier) {
         return FROM_CONVERSION_SPECIFIER.get(conversionSpecifier);
     }
 
@@ -134,37 +129,37 @@ enum RubyTimeFormatDirective {
         return this.isNumeric;
     }
 
-    List<RubyTimeFormatToken> toTokens() {
+    List<FormatToken> toTokens() {
         return TO_TOKENS.get(this);
     }
 
     static {
-        final HashMap<Character, RubyTimeFormatDirective> charDirectiveMapBuilt = new HashMap<>();
-        for (final RubyTimeFormatDirective directive : values()) {
+        final HashMap<Character, FormatDirective> charDirectiveMapBuilt = new HashMap<>();
+        for (final FormatDirective directive : values()) {
             if (directive.conversionSpecifier != '\0') {
                 charDirectiveMapBuilt.put(directive.conversionSpecifier, directive);
             }
         }
         FROM_CONVERSION_SPECIFIER = Collections.unmodifiableMap(charDirectiveMapBuilt);
 
-        final EnumMap<RubyTimeFormatDirective, List<RubyTimeFormatToken>> directiveTokensMapBuilt =
-                new EnumMap<>(RubyTimeFormatDirective.class);
-        for (final RubyTimeFormatDirective directive : values()) {
+        final EnumMap<FormatDirective, List<FormatToken>> directiveTokensMapBuilt =
+                new EnumMap<>(FormatDirective.class);
+        for (final FormatDirective directive : values()) {
             // Non-recurred directives first so that recurred directives can use tokens of non-recurred directives.
             if (!directive.isRecurred) {
-                final ArrayList<RubyTimeFormatToken> tokensBuilt = new ArrayList<>();
-                tokensBuilt.add(new RubyTimeFormatToken.Directive(directive));
+                final ArrayList<FormatToken> tokensBuilt = new ArrayList<>();
+                tokensBuilt.add(new FormatToken.Directive(directive));
                 directiveTokensMapBuilt.put(directive, Collections.unmodifiableList(tokensBuilt));
             }
         }
-        for (final RubyTimeFormatDirective directive : values()) {
+        for (final FormatDirective directive : values()) {
             if (directive.isRecurred) {
-                final ArrayList<RubyTimeFormatToken> tokensBuilt = new ArrayList<>();
+                final ArrayList<FormatToken> tokensBuilt = new ArrayList<>();
                 for (int i = 0; i < directive.recurred.length(); ++i) {
-                    final RubyTimeFormatDirective eachDirective =
+                    final FormatDirective eachDirective =
                             charDirectiveMapBuilt.get(directive.recurred.charAt(i));
                     if (eachDirective == null) {
-                        tokensBuilt.add(new RubyTimeFormatToken.Immediate(directive.recurred.charAt(i)));
+                        tokensBuilt.add(new FormatToken.Immediate(directive.recurred.charAt(i)));
                     } else {
                         tokensBuilt.add(directiveTokensMapBuilt.get(eachDirective).get(0));
                     }
@@ -175,8 +170,8 @@ enum RubyTimeFormatDirective {
         TO_TOKENS = Collections.unmodifiableMap(directiveTokensMapBuilt);
     }
 
-    private static final Map<Character, RubyTimeFormatDirective> FROM_CONVERSION_SPECIFIER;
-    private static final Map<RubyTimeFormatDirective, List<RubyTimeFormatToken>> TO_TOKENS;
+    private static final Map<Character, FormatDirective> FROM_CONVERSION_SPECIFIER;
+    private static final Map<FormatDirective, List<FormatToken>> TO_TOKENS;
 
     private final char conversionSpecifier;
     private final boolean isNumeric;

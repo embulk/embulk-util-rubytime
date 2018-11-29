@@ -6,32 +6,27 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * RubyTimeFormat represents a Ruby-compatible time format.
- *
- * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
- * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
- *
- * This class is intentionally package-private so that plugins do not directly depend.
+ * Represents a Ruby-compatible date-time format.
  */
-class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
-    private RubyTimeFormat(final List<RubyTimeFormatToken> compiledPattern) {
+class Format implements Iterable<Format.TokenWithNext> {
+    private Format(final List<FormatToken> compiledPattern) {
         this.compiledPattern = Collections.unmodifiableList(compiledPattern);
     }
 
-    public static RubyTimeFormat compile(final String formatString) {
-        return new RubyTimeFormat(CompilerForParser.compile(formatString));
+    public static Format compile(final String formatString) {
+        return new Format(CompilerForParser.compile(formatString));
     }
 
-    static RubyTimeFormat createForTesting(final List<RubyTimeFormatToken> compiledPattern) {
-        return new RubyTimeFormat(compiledPattern);
+    static Format createForTesting(final List<FormatToken> compiledPattern) {
+        return new Format(compiledPattern);
     }
 
     @Override
     public boolean equals(final Object otherObject) {
-        if (!(otherObject instanceof RubyTimeFormat)) {
+        if (!(otherObject instanceof Format)) {
             return false;
         }
-        final RubyTimeFormat other = (RubyTimeFormat) otherObject;
+        final Format other = (Format) otherObject;
         return this.compiledPattern.equals(other.compiledPattern);
     }
 
@@ -41,21 +36,21 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
     }
 
     static class TokenWithNext {
-        private TokenWithNext(final RubyTimeFormatToken token, final RubyTimeFormatToken nextToken) {
+        private TokenWithNext(final FormatToken token, final FormatToken nextToken) {
             this.token = token;
             this.nextToken = nextToken;
         }
 
-        RubyTimeFormatToken getToken() {
+        FormatToken getToken() {
             return this.token;
         }
 
-        RubyTimeFormatToken getNextToken() {
+        FormatToken getNextToken() {
             return this.nextToken;
         }
 
-        private final RubyTimeFormatToken token;
-        private final RubyTimeFormatToken nextToken;
+        private final FormatToken token;
+        private final FormatToken nextToken;
     }
 
     private static class CompilerForParser {
@@ -63,11 +58,11 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
             this.formatString = formatString;
         }
 
-        public static List<RubyTimeFormatToken> compile(final String formatString) {
+        public static List<FormatToken> compile(final String formatString) {
             return new CompilerForParser(formatString).compileInitial();
         }
 
-        private List<RubyTimeFormatToken> compileInitial() {
+        private List<FormatToken> compileInitial() {
             this.index = 0;
             this.resultTokens = new ArrayList<>();
             this.rawStringBuffer = new StringBuilder();
@@ -77,7 +72,7 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
                 switch (cur) {
                     case '%':
                         if (this.rawStringBuffer.length() > 0) {
-                            this.resultTokens.add(new RubyTimeFormatToken.Immediate(this.rawStringBuffer.toString()));
+                            this.resultTokens.add(new FormatToken.Immediate(this.rawStringBuffer.toString()));
                         }
                         this.rawStringBuffer = new StringBuilder();
                         this.index++;
@@ -91,7 +86,7 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
                 }
             }
             if (this.rawStringBuffer.length() > 0) {
-                this.resultTokens.add(new RubyTimeFormatToken.Immediate(this.rawStringBuffer.toString()));
+                this.resultTokens.add(new FormatToken.Immediate(this.rawStringBuffer.toString()));
             }
 
             return Collections.unmodifiableList(this.resultTokens);
@@ -131,12 +126,12 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
                     }
                     return false;
                 case '%':
-                    this.resultTokens.add(new RubyTimeFormatToken.Immediate("%"));
+                    this.resultTokens.add(new FormatToken.Immediate("%"));
                     this.index = beginningIndex + 1;
                     return true;
                 default:
-                    if (RubyTimeFormatDirective.isSpecifier(cur)) {
-                        this.resultTokens.addAll(RubyTimeFormatDirective.of(cur).toTokens());
+                    if (FormatDirective.isSpecifier(cur)) {
+                        this.resultTokens.addAll(FormatDirective.of(cur).toTokens());
                         this.index = beginningIndex + 1;
                         return true;
                     } else {
@@ -148,12 +143,12 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
         private final String formatString;
 
         private int index;
-        private List<RubyTimeFormatToken> resultTokens;
+        private List<FormatToken> resultTokens;
         private StringBuilder rawStringBuffer;
     }
 
     private static class TokenIterator implements Iterator<TokenWithNext> {
-        private TokenIterator(final Iterator<RubyTimeFormatToken> initialIterator) {
+        private TokenIterator(final Iterator<FormatToken> initialIterator) {
             this.internalIterator = initialIterator;
             if (initialIterator.hasNext()) {
                 this.next = initialIterator.next();
@@ -179,9 +174,9 @@ class RubyTimeFormat implements Iterable<RubyTimeFormat.TokenWithNext> {
             return tokenWithNext;
         }
 
-        private final Iterator<RubyTimeFormatToken> internalIterator;
-        private RubyTimeFormatToken next;
+        private final Iterator<FormatToken> internalIterator;
+        private FormatToken next;
     }
 
-    private final List<RubyTimeFormatToken> compiledPattern;
+    private final List<FormatToken> compiledPattern;
 }

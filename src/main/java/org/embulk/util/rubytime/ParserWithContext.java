@@ -11,14 +11,14 @@ class ParserWithContext {
         this.fail = false;
     }
 
-    Parsed parse(final RubyTimeFormat format) {
+    Parsed parse(final Format format) {
         final Parsed.Builder builder = Parsed.builder(this.text);
 
-        for (final RubyTimeFormat.TokenWithNext tokenWithNext : format) {
-            final RubyTimeFormatToken token = tokenWithNext.getToken();
+        for (final Format.TokenWithNext tokenWithNext : format) {
+            final FormatToken token = tokenWithNext.getToken();
 
             if (!token.isDirective()) {
-                final RubyTimeFormatToken.Immediate stringToken = (RubyTimeFormatToken.Immediate) token;
+                final FormatToken.Immediate stringToken = (FormatToken.Immediate) token;
                 final String str = stringToken.getContent();
                 for (int i = 0; i < str.length(); i++) {
                     final char c = str.charAt(i);
@@ -34,7 +34,7 @@ class ParserWithContext {
                     }
                 }
             } else {
-                switch (((RubyTimeFormatToken.Directive) token).getFormatDirective()) {
+                switch (((FormatToken.Directive) token).getFormatDirective()) {
                     // %A - The full weekday name (``Sunday'')
                     // %a - The abbreviated name (``Sun'')
                     case DAY_OF_WEEK_FULL_NAME:
@@ -178,8 +178,8 @@ class ParserWithContext {
                         final long v;
                         final int initPos = pos;
                         if (isNumberPattern(tokenWithNext.getNextToken())) {
-                            if (((RubyTimeFormatToken.Directive) token).getFormatDirective()
-                                    == RubyTimeFormatDirective.MILLI_OF_SECOND) {
+                            if (((FormatToken.Directive) token).getFormatDirective()
+                                    == FormatDirective.MILLI_OF_SECOND) {
                                 v = readDigits(3);
                             } else {
                                 v = readDigits(9);
@@ -273,8 +273,8 @@ class ParserWithContext {
                             fail = true;
                         }
 
-                        if (((RubyTimeFormatToken.Directive) token).getFormatDirective()
-                                == RubyTimeFormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
+                        if (((FormatToken.Directive) token).getFormatDirective()
+                                == FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
                             builder.setWeekOfYearStartingWithSunday((int) week);
                         } else {
                             builder.setWeekOfYearStartingWithMonday((int) week);
@@ -446,12 +446,12 @@ class ParserWithContext {
      *
      * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/ext/date/date_strptime.c?view=markup#l58">num_pattern_p</a>
      */
-    private static boolean isNumberPattern(final RubyTimeFormatToken token) {
+    private static boolean isNumberPattern(final FormatToken token) {
         if (token == null) {
             return false;
-        } else if ((!token.isDirective()) && isDigit(((RubyTimeFormatToken.Immediate) token).getContent().charAt(0))) {
+        } else if ((!token.isDirective()) && isDigit(((FormatToken.Immediate) token).getContent().charAt(0))) {
             return true;
-        } else if (token.isDirective() && ((RubyTimeFormatToken.Directive) token).getFormatDirective().isNumeric()) {
+        } else if (token.isDirective() && ((FormatToken.Directive) token).getFormatDirective().isNumeric()) {
             return true;
         } else {
             return false;
