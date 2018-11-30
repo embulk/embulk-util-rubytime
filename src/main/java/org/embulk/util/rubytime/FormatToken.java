@@ -1,18 +1,13 @@
 package org.embulk.util.rubytime;
 
 /**
- * RubyTimeFormatToken represents a token in Ruby-compatible time format strings.
- *
- * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
- * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
- *
- * This class is intentionally package-private so that plugins do not directly depend.
+ * Represents a token instance in Ruby-compatible date-time format strings.
  */
-abstract class RubyTimeFormatToken {
+abstract class FormatToken {
     abstract boolean isDirective();
 
-    static class Directive extends RubyTimeFormatToken {
-        Directive(final RubyTimeFormatDirective formatDirective) {
+    static class Directive extends FormatToken {
+        Directive(final FormatDirective formatDirective) {
             this.formatDirective = formatDirective;
         }
 
@@ -35,14 +30,14 @@ abstract class RubyTimeFormatToken {
             return true;
         }
 
-        RubyTimeFormatDirective getFormatDirective() {
+        FormatDirective getFormatDirective() {
             return this.formatDirective;
         }
 
-        private final RubyTimeFormatDirective formatDirective;
+        private final FormatDirective formatDirective;
     }
 
-    static class Immediate extends RubyTimeFormatToken {
+    static class Immediate extends FormatToken {
         Immediate(final char character) {
             this.string = "" + character;
         }

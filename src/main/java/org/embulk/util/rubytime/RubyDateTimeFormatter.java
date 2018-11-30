@@ -17,17 +17,17 @@ import java.time.temporal.TemporalAccessor;
  * </code>
  */
 public final class RubyDateTimeFormatter {
-    private RubyDateTimeFormatter(final RubyTimeFormat format) {
+    private RubyDateTimeFormatter(final Format format) {
         this.format = format;
     }
 
     public static RubyDateTimeFormatter ofPattern(final String pattern) {
-        return new RubyDateTimeFormatter(RubyTimeFormat.compile(pattern));
+        return new RubyDateTimeFormatter(Format.compile(pattern));
     }
 
     public TemporalAccessor parseUnresolved(final String text) {
         return new ParserWithContext(text).parse(this.format);
     }
 
-    private final RubyTimeFormat format;
+    private final Format format;
 }
