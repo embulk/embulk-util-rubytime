@@ -53,6 +53,17 @@ public class TestRubyDateTimeFormatterParse {
     }
 
     @Test
+    public void testSubseconds() throws RubyTimeResolveException {
+        assertParsedTime("2007-08-01T00:00:00.777777777",
+                         "%Y-%m-%dT%H:%M:%S.%N",
+                         Instant.ofEpochSecond(1185926400L, 777777777));
+        // TODO: Fix it.
+        // assertParsedTime("2007-08-01T00:00:00.77777777777777",
+        //                  "%Y-%m-%dT%H:%M:%S.%N",
+        //                  Instant.ofEpochSecond(1185926400L, 777777777));
+    }
+
+    @Test
     public void testDateTimeFromInstant() throws RubyTimeResolveException {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern("%Q.%N");
         final TemporalAccessor parsed = formatter.parseUnresolved("1500000000456.111111111");

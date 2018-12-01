@@ -8,9 +8,13 @@ module TimeMonkeyPatch
       def strptime(date, format)
         formatter = Java::org.embulk.util.rubytime.RubyDateTimeFormatter.ofPattern(format)
 
-        parsed = formatter.parseUnresolved(date)
-        if parsed.nil?
+        begin
+          parsed = formatter.parseUnresolved(date)
+        rescue Java::org.embulk.util.rubytime.RubyDateTimeParseException
           return nil
+        end
+        if parsed.nil?
+          raise 'RubyDateTimeFormatter#parseUnresolved returned null unexpectedly.'
         end
 
         resolver = Java::org.embulk.util.rubytime.DefaultRubyTimeResolver.of()
