@@ -12,9 +12,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Queries to provide Maps of parsed elements, which are analogous to Ruby hashes by Date._strptime.
+ * Queries to retrieve a Map of parsed elements.
+ *
+ * <p>The {@code Map} of parsed elements is analogous to a hash returned from {@code Date._strptime} like below.
+ *
+ * <pre>{@code
+ * {:year=>2001, :mon=>2, :mday=>3}
+ * }</pre>
+ *
+ * @see <a href="https://ruby-doc.org/stdlib-2.5.1/libdoc/date/rdoc/Date.html#method-c-_strptime">Date._strptime</a>
  */
-public class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
+public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
     public static interface FractionConverter {
         Object convertFraction(int seconds, int nanoOfSecond);
     }

@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * <p>If the given zone is not recognized above, it is fallback to {@code org.embulk.util.rubytime.DateZones}.
  */
-public class LegacyEmbulkZones {
+final class LegacyEmbulkZones {
     private LegacyEmbulkZones() {
         // No instantiation.
     }

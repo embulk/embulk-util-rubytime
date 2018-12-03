@@ -1,6 +1,5 @@
 package org.embulk.util.rubytime;
 
-import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.OffsetDateTime;

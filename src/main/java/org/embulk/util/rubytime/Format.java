@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Represents a Ruby-compatible date-time format.
  */
-class Format implements Iterable<Format.TokenWithNext> {
+final class Format implements Iterable<Format.TokenWithNext> {
     private Format(final List<FormatToken> compiledPattern) {
         this.compiledPattern = Collections.unmodifiableList(compiledPattern);
     }

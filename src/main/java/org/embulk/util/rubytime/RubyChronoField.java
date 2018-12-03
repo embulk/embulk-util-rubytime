@@ -9,6 +9,9 @@ import java.time.temporal.TemporalUnit;
 import java.time.temporal.ValueRange;
 import java.util.Locale;
 
+/**
+ * A Ruby-specific set of temporal fields.
+ */
 public final class RubyChronoField {
     public static final TemporalField WEEK_BASED_YEAR = Field.WEEK_BASED_YEAR;
 

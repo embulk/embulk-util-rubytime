@@ -13,14 +13,12 @@ import java.time.temporal.TemporalQuery;
 import java.time.temporal.ValueRange;
 
 /**
- * Resolves date/time from TemporalAccessor parsed by RubyDateTimeFormatter by the same rule as Ruby's Time.strptime.
+ * Resolves date-time from {@code java.time.temporal.TemporalAccessor} parsed by {@code RubyDateTimeFormatter} by the same rule as Ruby's {@code Time.strptime}.
  *
  * <p>A difference from Ruby's {@code Time.strptime} is that it does not consider "now" and local time zone.
  * If the given zone is neither numerical nor predefined textual time zones, it returns defaultZoneOffset then.
  *
  * <p>Ruby's {@code Time} class implements a proleptic Gregorian calendar and has no concept of calendar reform.
- *
- * @see <a href="https://docs.ruby-lang.org/en/2.5.0/DateTime.html#class-DateTime-label-When+should+you+use+DateTime+and+when+should+you+use+Time-3F">When should you use DateTime and when should you use Time?</a>
  *
  * <p>Epoch seconds (%s) and epoch milliseconds (%Q) are prioritized over calendar date/time although
  * fraction part (%L/%N) is added to the epoch seconds/milliseconds.
@@ -57,9 +55,11 @@ import java.time.temporal.ValueRange;
  *
  * <p>The resolver is reimplemented based on {@code Time.strptime} of Ruby v2.5.0.
  *
+ * @see <a href="https://docs.ruby-lang.org/en/2.5.0/DateTime.html#class-DateTime-label-When+should+you+use+DateTime+and+when+should+you+use+Time-3F">When should you use DateTime and when should you use Time?</a>
+ *
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l431">Time.strptime</a>
  */
-public class DefaultRubyTimeResolver implements RubyTimeResolver {
+public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
     private DefaultRubyTimeResolver(
             final boolean acceptsEmpty,
             final ZoneOffset defaultOffset,

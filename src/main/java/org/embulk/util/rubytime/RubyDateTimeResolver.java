@@ -3,8 +3,8 @@ package org.embulk.util.rubytime;
 import java.time.temporal.TemporalAccessor;
 
 /**
- * Resolves TemporalAccessor parsed by RubyDateTimeFormatter into a meaningful date-time object.
+ * Resolves {@code java.time.temporal.TemporalAccessor} parsed by {@code RubyDateTimeFormatter} into a meaningful date-time object.
  */
-public interface RubyTimeResolver {
+public interface RubyDateTimeResolver {
     TemporalAccessor resolve(TemporalAccessor source) throws RubyTimeResolveException;
 }

@@ -68,7 +68,7 @@ public class TestRubyDateTimeFormatterParse {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern("%Q.%N");
         final TemporalAccessor parsed = formatter.parseUnresolved("1500000000456.111111111");
 
-        final RubyTimeResolver resolver = DefaultRubyTimeResolver.of();
+        final RubyDateTimeResolver resolver = DefaultRubyTimeResolver.of();
         final TemporalAccessor resolved = resolver.resolve(parsed);
 
         final OffsetDateTime datetime = OffsetDateTime.from(resolved);
@@ -88,7 +88,7 @@ public class TestRubyDateTimeFormatterParse {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern(format);
         final TemporalAccessor parsed = formatter.parseUnresolved(string);
 
-        final RubyTimeResolver resolver = DefaultRubyTimeResolver.of();
+        final RubyDateTimeResolver resolver = DefaultRubyTimeResolver.of();
         final TemporalAccessor resolved = resolver.resolve(parsed);
 
         final Instant actualInstant = Instant.from(resolved);
