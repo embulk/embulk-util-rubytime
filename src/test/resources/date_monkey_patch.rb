@@ -8,9 +8,13 @@ module DateMonkeyPatch
       def _strptime(str, fmt='%F')
         formatter = Java::org.embulk.util.rubytime.RubyDateTimeFormatter.ofPattern(fmt)
 
-        parsed = formatter.parseUnresolved(str)
-        if parsed.nil?
+        begin
+          parsed = formatter.parseUnresolved(str)
+        rescue Java::org.embulk.util.rubytime.RubyDateTimeParseException
           return nil
+        end
+        if parsed.nil?
+          raise 'RubyDateTimeFormatter#parseUnresolved returned null unexpectedly.'
         end
 
         map = parsed.query(Java::org.embulk.util.rubytime.ParsedElementsQuery.of(
