@@ -3,9 +3,9 @@ package org.embulk.util.rubytime;
 import java.time.temporal.TemporalAccessor;
 
 /**
- * Formatter for printing and parsing date-time objects in a way similar to Ruby's Time.strptime.
+ * Formatter for printing and parsing date-time objects in a way similar to Ruby's {@code Time.strptime}.
  *
- * <p>Methods in this class are designed to be similar to {@code java.time.DateTimeFormatter}.
+ * <p>Methods in this class are designed to be similar to {@link java.time.format.DateTimeFormatter}.
  */
 public final class RubyDateTimeFormatter {
     private RubyDateTimeFormatter(final Format format) {
@@ -26,7 +26,7 @@ public final class RubyDateTimeFormatter {
     /**
      * Parses the text using this formatter, without resolving the result, intended for advanced use cases.
      *
-     * <p>Parsing is implemented as a two-phase operation as {@code java.time.DateTimeFormatter#parseUnresolved} does.
+     * <p>Parsing is implemented as a two-phase operation as {@link java.time.format.DateTimeFormatter#parseUnresolved} does.
      *
      * <p>Note that epoch milliseconds (%Q) and epoch seconds (%s) are considered equally.
      *
