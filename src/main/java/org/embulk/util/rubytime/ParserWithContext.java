@@ -2,6 +2,7 @@ package org.embulk.util.rubytime;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.Year;
 
 class ParserWithContext {
     ParserWithContext(final CharSequence text) {
@@ -217,71 +218,57 @@ class ParserWithContext {
 
     private void consumeCentury(final Parsed.Builder builder, final FormatToken nextToken) {
         if (isNumberPattern(nextToken)) {
-            builder.setCentury((int) this.consumeDigits(2));
+            builder.setCentury(this.consumeDigitsInInt(2, 0, 99, "invalid century"));
         } else {
-            builder.setCentury((int) this.consumeDigitsMax());
+            // JSR-310 accepts only [-999_999_999, 999_999_999] as a year, not [Integer.MIN_VALUE, Integer.MAX_VALUE].
+            // It is different from Ruby's Date._strptime / Time.strptime.
+            builder.setCentury(this.consumeDigitsInInt(Integer.MAX_VALUE, 0, Year.MAX_VALUE / 100, "invalid century"));
         }
     }
 
     private void consumeDayOfMonth(final Parsed.Builder builder) {
-        final long dayOfMonth;
         if (isBlank(this.text, this.pos)) {
             this.pos += 1;  // Blank
-            dayOfMonth = this.consumeDigits(1);
+            builder.setDayOfMonth(this.consumeDigitsInInt(1, 1, 31, "invalid day of month"));
         } else {
-            dayOfMonth = this.consumeDigits(2);
+            builder.setDayOfMonth(this.consumeDigitsInInt(2, 1, 31, "invalid day of month"));
         }
-
-        this.throwIfOutOfRange(dayOfMonth, 1, 31, "invalid day of month");
-        builder.setDayOfMonth((int) dayOfMonth);
     }
 
     private void consumeWeekBasedYearWithCentury(final Parsed.Builder builder, final FormatToken nextToken) {
         if (isNumberPattern(nextToken)) {
-            builder.setWeekBasedYear((int) this.consumeDigits(4));
+            builder.setWeekBasedYear(this.consumeDigitsInInt(4, 0, 9999, "invalid year"));
         } else {
-            builder.setWeekBasedYear((int) this.consumeDigitsMax());
+            // JSR-310 accepts only [-999_999_999, 999_999_999] as a year, not [Integer.MIN_VALUE, Integer.MAX_VALUE].
+            // It is different from Ruby's Date._strptime / Time.strptime.
+            builder.setWeekBasedYear(this.consumeDigitsInInt(Integer.MAX_VALUE, 0, Year.MAX_VALUE, "invalid year"));
         }
     }
 
     private void consumeWeekBasedYearWithoutCentury(final Parsed.Builder builder) {
-        final long weekBasedYearWithoutCentury = this.consumeDigits(2);
-
-        this.throwIfOutOfRange(weekBasedYearWithoutCentury, 0, 99, "invalid year");
-        builder.setWeekBasedYearWithoutCentury((int) weekBasedYearWithoutCentury);
+        builder.setWeekBasedYearWithoutCentury(this.consumeDigitsInInt(2, 0, 99, "invalid year"));
     }
 
     private void consumeHourOfDay(final Parsed.Builder builder) {
-        final long hourOfDay;
         if (isBlank(this.text, this.pos)) {
             this.pos += 1;  // Blank
-            hourOfDay = this.consumeDigits(1);
+            builder.setHour(this.consumeDigitsInInt(1, 0, 24, "invalid hour of day"));
         } else {
-            hourOfDay = this.consumeDigits(2);
+            builder.setHour(this.consumeDigitsInInt(2, 0, 24, "invalid hour of day"));
         }
-
-        this.throwIfOutOfRange(hourOfDay, 0, 24, "invalid hour of day");
-        builder.setHour((int) hourOfDay);
     }
 
     private void consumeHourOfAmPm(final Parsed.Builder builder) {
-        final long hourOfAmPm;
         if (isBlank(this.text, this.pos)) {
             this.pos += 1;  // Blank
-            hourOfAmPm = this.consumeDigits(1);
+            builder.setHour(this.consumeDigitsInInt(1, 1, 12, "invalid hour of am/pm"));
         } else {
-            hourOfAmPm = this.consumeDigits(2);
+            builder.setHour(this.consumeDigitsInInt(2, 1, 12, "invalid hour of am/pm"));
         }
-
-        this.throwIfOutOfRange(hourOfAmPm, 1, 12, "invalid hour of am/pm");
-        builder.setHour((int) hourOfAmPm);
     }
 
     private void consumeDayOfYear(final Parsed.Builder builder) {
-        final long dayOfYear = this.consumeDigits(3);
-
-        this.throwIfOutOfRange(dayOfYear, 1, 365, "invalid day of year");
-        builder.setDayOfYear((int) dayOfYear);
+        builder.setDayOfYear(this.consumeDigitsInInt(3, 1, 365, "invalid day of year"));
     }
 
     private void consumeSubsecond(final Parsed.Builder builder, final FormatToken thisToken, final FormatToken nextToken) {
@@ -293,36 +280,26 @@ class ParserWithContext {
             negative = false;
         }
 
-        final int initialPosition = this.pos;
-
         final long value;
         if (isNumberPattern(nextToken)) {
             if (((FormatToken.Directive) thisToken).getFormatDirective() == FormatDirective.MILLI_OF_SECOND) {
-                value = this.consumeDigits(3);
+                value = this.consumeFractionalPartInInt(3, 9, "invalid fraction part of second");
             } else {
-                value = this.consumeDigits(9);
+                value = this.consumeFractionalPartInInt(9, 9, "invalid fraction part of second");
             }
         } else {
-            value = this.consumeDigitsMax();
+            value = this.consumeFractionalPartInInt(Integer.MAX_VALUE, 9, "invalid fraction part of second");
         }
 
-        // TODO: Fix cases of subseconds longer than 9.
-        // TODO: Stop using Math.pow(double, double).
-        builder.setNanoOfSecond((int) (!negative ? value : -value) * (int) Math.pow(10, 9 - (this.pos - initialPosition)));
+        builder.setNanoOfSecond((int) (!negative ? value : -value));
     }
 
     private void consumeMinuteOfHour(final Parsed.Builder builder) {
-        final long minuteOfHour = this.consumeDigits(2);
-
-        this.throwIfOutOfRange(minuteOfHour, 0, 59, "invalid minute of hour");
-        builder.setMinuteOfHour((int) minuteOfHour);
+        builder.setMinuteOfHour(this.consumeDigitsInInt(2, 0, 59, "invalid minute of hour"));
     }
 
     private void consumeMonthOfYear(final Parsed.Builder builder) {
-        final long monthOfYear = this.consumeDigits(2);
-
-        this.throwIfOutOfRange(monthOfYear, 1, 12, "invalid month of year");
-        builder.setMonthOfYear((int) monthOfYear);
+        builder.setMonthOfYear(this.consumeDigitsInInt(2, 1, 12, "invalid month of year"));
     }
 
     private void consumeAmPmOfDay(final Parsed.Builder builder) {
@@ -347,15 +324,17 @@ class ParserWithContext {
             negative = false;
         }
 
-        final long absoluteMillisecondSinceEpoch = this.consumeDigitsMax();
+        // JSR-310 accepts only [-1000000000-01-01T00:00Z, 1000000000-12-31T23:59:59.999999999Z] as an Instant.
+        // It is different from Ruby's Date._strptime / Time.strptime.
+        //
+        // Note that Instant.MAX.toEpochMillis() > Long.MAX_VALUE. Long.MAX_VALUE is considered as its maximum.
+        final long absoluteMillisecondSinceEpoch = this.consumeDigitsInLong(
+                Integer.MAX_VALUE, 0, Long.MAX_VALUE, "invalid millisecond since epoch");
         builder.setInstantMilliseconds(negative ? -absoluteMillisecondSinceEpoch : absoluteMillisecondSinceEpoch);
     }
 
     private void consumeSecondOfMinute(final Parsed.Builder builder) {
-        final long secondOfMinute = this.consumeDigits(2);
-
-        this.throwIfOutOfRange(secondOfMinute, 0, 60, "invalid second of minute");
-        builder.setSecondOfMinute((int) secondOfMinute);
+        builder.setSecondOfMinute(this.consumeDigitsInInt(2, 0, 60, "invalid second of minute"));
     }
 
     private void consumeSecondSinceEpoch(final Parsed.Builder builder) {
@@ -367,40 +346,34 @@ class ParserWithContext {
             negative = false;
         }
 
-        final long absoluteSecondSinceEpoch = this.consumeDigitsMax();
-        builder.setInstantMilliseconds((negative ? -absoluteSecondSinceEpoch : absoluteSecondSinceEpoch) * 1000);
+        // JSR-310 accepts only [-1000000000-01-01T00:00Z, 1000000000-12-31T23:59:59.999999999Z] as an Instant.
+        // It is different from Ruby's Date._strptime / Time.strptime.
+        //
+        // Note that Instant.MAX.toEpochMillis() > Long.MAX_VALUE. Long.MAX_VALUE / 1000 is considered as its maximum
+        // because it stores second since epoch internally as millisecond.
+        final long absoluteSecondSinceEpoch = this.consumeDigitsInLong(
+                Integer.MAX_VALUE, 0, Long.MAX_VALUE / 1000L, "invalid second since epoch");
+        builder.setInstantMilliseconds((negative ? -absoluteSecondSinceEpoch : absoluteSecondSinceEpoch) * 1000L);
     }
 
     private void consumeWeekOfYear(final Parsed.Builder builder, final FormatToken thisToken) {
-        final long weekOfYear = this.consumeDigits(2);
-        this.throwIfOutOfRange(weekOfYear, 0, 53, "invalid week of year");
-
         if (((FormatToken.Directive) thisToken).getFormatDirective() == FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
-            builder.setWeekOfYearStartingWithSunday((int) weekOfYear);
+            builder.setWeekOfYearStartingWithSunday(this.consumeDigitsInInt(2, 0, 53, "invalid week of year"));
         } else {
-            builder.setWeekOfYearStartingWithMonday((int) weekOfYear);
+            builder.setWeekOfYearStartingWithMonday(this.consumeDigitsInInt(2, 0, 53, "invalid week of year"));
         }
     }
 
     private void consumeDayOfWeekStartingWithMonday1(final Parsed.Builder builder) {
-        final long dayOfWeek = this.consumeDigits(1);
-
-        this.throwIfOutOfRange(dayOfWeek, 1, 7, "invalid day of week");
-        builder.setDayOfWeekStartingWithMonday1((int) dayOfWeek);
+        builder.setDayOfWeekStartingWithMonday1(this.consumeDigitsInInt(1, 1, 7, "invalid day of week"));
     }
 
     private void consumeWeekOfWeekBasedYear(final Parsed.Builder builder) {
-        final long weekOfWeekBasedYear = this.consumeDigits(2);
-
-        this.throwIfOutOfRange(weekOfWeekBasedYear, 1, 53, "invalid week of year");
-        builder.setWeekOfWeekBasedYear((int) weekOfWeekBasedYear);
+        builder.setWeekOfWeekBasedYear(this.consumeDigitsInInt(2, 1, 53, "invalid week of year"));
     }
 
     private void consumeDayOfWeekStartingWithSunday0(final Parsed.Builder builder) {
-        final long dayOfWeek = this.consumeDigits(1);
-
-        this.throwIfOutOfRange(dayOfWeek, 0, 6, "invalid week of year");
-        builder.setDayOfWeekStartingWithSunday0((int) dayOfWeek);
+        builder.setDayOfWeekStartingWithSunday0(this.consumeDigitsInInt(1, 0, 6, "invalid day of week"));
     }
 
     private void consumeYearWithCentury(final Parsed.Builder builder, final FormatToken nextToken) {
@@ -412,21 +385,20 @@ class ParserWithContext {
             negative = false;
         }
 
-        final long yearWithCentury;
+        final int yearWithCentury;
         if (isNumberPattern(nextToken)) {
-            yearWithCentury = this.consumeDigits(4);
+            yearWithCentury = this.consumeDigitsInInt(4, 0, 9999, "invalid year");
         } else {
-            yearWithCentury = this.consumeDigitsMax();
+            // JSR-310 accepts only [-999_999_999, 999_999_999] as a year, not [Integer.MIN_VALUE, Integer.MAX_VALUE].
+            // It is different from Ruby's Date._strptime / Time.strptime.
+            yearWithCentury = this.consumeDigitsInInt(Integer.MAX_VALUE, 0, Year.MAX_VALUE, "invalid year");
         }
 
         builder.setYear((int) (!negative ? yearWithCentury : -yearWithCentury));
     }
 
     private void consumeYearWithoutCentury(final Parsed.Builder builder) {
-        final long yearWithoutCentury = this.consumeDigits(2);
-
-        this.throwIfOutOfRange(yearWithoutCentury, 0, 99, "invalid year");
-        builder.setYearWithoutCentury((int) yearWithoutCentury);
+        builder.setYearWithoutCentury(this.consumeDigitsInInt(2, 0, 99, "invalid year"));
     }
 
     private void consumeTimeZone(final Parsed.Builder builder) {
@@ -450,26 +422,58 @@ class ParserWithContext {
         this.pos += zone.length();
     }
 
-    private long consumeDigits(final int length) {
-        final int initialPosition = this.pos;
-
+    private long consumeDigitsInternal(
+            final int digitsToConsume,
+            final boolean isFraction,
+            final int exponentInFraction,
+            final long lowerLimit,
+            final long upperLimit,
+            final String messageOutOfRange) {
         long result = 0L;
-        for (int i = 0; i < length; i++) {
+
+        int digitsConsumed = 0;
+        for (digitsConsumed = 0; digitsConsumed < digitsToConsume; digitsConsumed++) {
             if (isEndOfText(this.text, this.pos)) {
                 break;
             }
 
-            final char c = text.charAt(this.pos);
-            if (!isDigit(c)) {
+            final char digitChar = text.charAt(this.pos);
+            if (!isDigit(digitChar)) {
                 break;
             }
-            result = result * 10 + toInt(c);
-            this.pos += 1;
+
+            if (isFraction) {
+                if (digitsConsumed < exponentInFraction) {
+                    final int digit = toInt(digitChar);
+                    result = result * 10 + digit;
+                }
+            } else {
+                final int digit = toInt(digitChar);
+                if (result > (Long.MAX_VALUE - digit) / 10) {
+                    throw new RubyDateTimeParseException(
+                            "Text '" + this.text + "' could not be parsed at index " + this.pos + ": " + messageOutOfRange,
+                            this.text,
+                            this.pos);
+                }
+                result = result * 10 + digit;
+            }
+            this.pos++;
         }
 
-        if (this.pos == initialPosition) {
+        if (digitsConsumed == 0) {
             throw new RubyDateTimeParseException(
                     "Text '" + this.text + "' could not be parsed at index " + this.pos + ": no digits",
+                    this.text,
+                    this.pos);
+        }
+
+        if (isFraction && exponentInFraction > digitsConsumed) {
+            result *= POW10[exponentInFraction - digitsConsumed];
+        }
+
+        if (lowerLimit > result || result > upperLimit) {
+            throw new RubyDateTimeParseException(
+                    "Text '" + this.text + "' could not be parsed at index " + this.pos + ": " + messageOutOfRange,
                     this.text,
                     this.pos);
         }
@@ -477,8 +481,33 @@ class ParserWithContext {
         return result;
     }
 
-    private long consumeDigitsMax() {
-        return this.consumeDigits(Integer.MAX_VALUE);
+    private int consumeDigitsInInt(
+            final int digitsToConsume,
+            final int lowerLimit,
+            final int upperLimit,
+            final String messageOutOfRange) {
+        return (int) this.consumeDigitsInternal(digitsToConsume, false, 0, lowerLimit, upperLimit, messageOutOfRange);
+    }
+
+    private long consumeDigitsInLong(
+            final int digitsToConsume,
+            final long lowerLimit,
+            final long upperLimit,
+            final String messageOutOfRange) {
+        return this.consumeDigitsInternal(digitsToConsume, false, 0, lowerLimit, upperLimit, messageOutOfRange);
+    }
+
+    private int consumeFractionalPartInInt(
+            final int digitsToConsume,
+            final int exponentInFraction,
+            final String messageOutOfRange) {
+        return (int) this.consumeDigitsInternal(
+                digitsToConsume,
+                true,
+                exponentInFraction,
+                0L,
+                POW10[exponentInFraction] - 1,
+                messageOutOfRange);
     }
 
     private int findIndexInPatterns(final String[] patterns) {
@@ -507,15 +536,6 @@ class ParserWithContext {
             return true;
         } else {
             return false;
-        }
-    }
-
-    private void throwIfOutOfRange(final long value, final int lower, final int upper, final String message) {
-        if (lower > value || value > upper) {
-            throw new RubyDateTimeParseException(
-                    "Text '" + this.text + "' could not be parsed at index " + this.pos + ": " + message,
-                    this.text,
-                    this.pos);
         }
     }
 
@@ -575,6 +595,12 @@ class ParserWithContext {
 
     private static final String[] MERID_NAMES = new String[] {
         "am", "pm", "a.m.", "p.m."
+    };
+
+    private static final long[] POW10 = {
+        1L, 10L, 100L, 1_000L, 10_000L, 100_000L, 1_000_000L, 10_000_000L, 100_000_000L, 1_000_000_000L,
+        10_000_000_000L, 100_000_000_000L, 1_000_000_000_000L, 10_000_000_000_000L, 100_000_000_000_000L,
+        1_000_000_000_000_000L, 10_000_000_000_000_000L, 100_000_000_000_000_000L, 1_000_000_000_000_000_000L,
     };
 
     private final String text;
