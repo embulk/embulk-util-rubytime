@@ -53,14 +53,33 @@ public class TestRubyDateTimeFormatterParse {
     }
 
     @Test
+    public void testLarge() throws RubyTimeResolveException {
+        assertParsedTime("-999999999-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S", Instant.ofEpochSecond(-31557014135596800L, 0));
+        // assertFailParse("-1000000000-12-31T23:59:59", "%Y-%m-%dT%H:%M:%S");
+        assertParsedTime("999999999-12-31T23:59:59", "%Y-%m-%dT%H:%M:%S", Instant.ofEpochSecond(31556889832780799L, 0));
+        // assertFailParse("1000000000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S");
+
+        assertParsedTime("9223372036854775", "%s", Instant.ofEpochSecond(9223372036854775L, 0));
+        // assertFailParse("9223372036854776", "%s");
+        assertParsedTime("-9223372036854775", "%s", Instant.ofEpochSecond(-9223372036854775L, 0));
+        // assertFailParse("-9223372036854776", "%s");
+
+        assertParsedTime("9223372036854775807", "%Q", Instant.ofEpochSecond(9223372036854775L, 807000000));
+        // assertFailParse("9223372036854775808", "%Q");
+        assertParsedTime("-9223372036854775807", "%Q", Instant.ofEpochSecond(-9223372036854776L, 193000000));
+        // assertFailParse("-9223372036854775808", "%Q");
+    }
+
+    @Test
     public void testSubseconds() throws RubyTimeResolveException {
+        // assertFailParse("2007-08-01T00:00:00.", "%Y-%m-%dT%H:%M:%S.%N");
+        // assertFailParse("2007-08-01T00:00:00.-777777777", "%Y-%m-%dT%H:%M:%S.%N");
         assertParsedTime("2007-08-01T00:00:00.777777777",
                          "%Y-%m-%dT%H:%M:%S.%N",
                          Instant.ofEpochSecond(1185926400L, 777777777));
-        // TODO: Fix it.
-        // assertParsedTime("2007-08-01T00:00:00.77777777777777",
-        //                  "%Y-%m-%dT%H:%M:%S.%N",
-        //                  Instant.ofEpochSecond(1185926400L, 777777777));
+        assertParsedTime("2007-08-01T00:00:00.77777777777777",
+                         "%Y-%m-%dT%H:%M:%S.%N",
+                         Instant.ofEpochSecond(1185926400L, 777777777));
     }
 
     @Test
