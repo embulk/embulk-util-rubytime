@@ -268,7 +268,7 @@ class ParserWithContext {
     }
 
     private void consumeDayOfYear(final Parsed.Builder builder) {
-        builder.setDayOfYear(this.consumeDigitsInInt(3, 1, 365, "invalid day of year"));
+        builder.setDayOfYear(this.consumeDigitsInInt(3, 1, 366, "invalid day of year"));
     }
 
     private void consumeSubsecond(final Parsed.Builder builder, final FormatToken thisToken, final FormatToken nextToken) {
