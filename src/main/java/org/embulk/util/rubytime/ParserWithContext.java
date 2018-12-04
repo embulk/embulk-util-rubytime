@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.Year;
 
-class ParserWithContext {
+final class ParserWithContext {
     ParserWithContext(final CharSequence text) {
         this.text = text.toString();
 

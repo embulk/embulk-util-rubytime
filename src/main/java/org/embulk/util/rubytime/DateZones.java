@@ -35,7 +35,7 @@ package org.embulk.util.rubytime;
  * <li>Offset with too long a fraction part (e.g. "UTC+10.111111111111") is not accepted. Exception is thrown instead.
  * </ul>
  */
-public final class DateZones {
+final class DateZones {
     private DateZones() {
         // No instantiation.
     }

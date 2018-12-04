@@ -6,7 +6,7 @@ package org.embulk.util.rubytime;
 abstract class FormatToken {
     abstract boolean isDirective();
 
-    static class Directive extends FormatToken {
+    static final class Directive extends FormatToken {
         Directive(final FormatDirective formatDirective) {
             this.formatDirective = formatDirective;
         }
@@ -37,7 +37,7 @@ abstract class FormatToken {
         private final FormatDirective formatDirective;
     }
 
-    static class Immediate extends FormatToken {
+    static final class Immediate extends FormatToken {
         Immediate(final char character) {
             this.string = "" + character;
         }

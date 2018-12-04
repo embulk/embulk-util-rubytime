@@ -40,7 +40,7 @@ import java.util.Locale;
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
  */
-public class TimeZones {
+final class TimeZones {
     private TimeZones() {
         // No instantiation.
     }

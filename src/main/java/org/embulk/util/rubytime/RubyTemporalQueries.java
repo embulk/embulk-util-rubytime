@@ -4,7 +4,10 @@ import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalQuery;
 
-public class RubyTemporalQueries {
+/**
+ * Ruby-specific implementations of {@code java.time.temporal.TemporalQuery}.
+ */
+public final class RubyTemporalQueries {
     private RubyTemporalQueries() {
         // No instantiation.
     }
