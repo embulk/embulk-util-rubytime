@@ -13,18 +13,43 @@ import java.util.Locale;
  * A Ruby-specific set of temporal fields.
  */
 public final class RubyChronoField {
+    private RubyChronoField() {
+        // No instantiation.
+    }
+
+    /**
+     * The ISO 8601 week-based year.
+     */
     public static final TemporalField WEEK_BASED_YEAR = Field.WEEK_BASED_YEAR;
 
+    /**
+     * The instant epoch-milliseconds.
+     */
     public static final TemporalField INSTANT_MILLIS = Field.INSTANT_MILLIS;
 
+    /**
+     * The week number of the year, with the week starting with Sunday (00..53).
+     */
     public static final TemporalField WEEK_OF_YEAR_STARTING_WITH_SUNDAY = Field.WEEK_OF_YEAR_STARTING_WITH_SUNDAY;
 
+    /**
+     * The week number of the year, with the week starting with Monday (00..53).
+     */
     public static final TemporalField WEEK_OF_YEAR_STARTING_WITH_MONDAY = Field.WEEK_OF_YEAR_STARTING_WITH_MONDAY;
 
+    /**
+     * The day of the week (Monday is 1, 1..7).
+     */
     public static final TemporalField DAY_OF_WEEK_STARTING_WITH_MONDAY_1 = Field.DAY_OF_WEEK_STARTING_WITH_MONDAY_1;
 
+    /**
+     * The week number of the ISO 8601 week-based year (01..53).
+     */
     public static final TemporalField WEEK_OF_WEEK_BASED_YEAR = Field.WEEK_OF_WEEK_BASED_YEAR;
 
+    /**
+     * The day of the week (Sunday is 0, 0..6).
+     */
     public static final TemporalField DAY_OF_WEEK_STARTING_WITH_SUNDAY_0 = Field.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0;
 
     static enum Field implements TemporalField {

@@ -12,22 +12,84 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Queries to retrieve a Map of parsed elements.
+ * A query to retrieve a {@link java.util.Map} of parsed elements.
  *
- * <p>The {@code Map} of parsed elements is analogous to a hash returned from {@code Date._strptime} like below.
+ * <p>The {@link java.util.Map} of parsed elements is analogous to a hash returned from Ruby's {@code Date._strptime} like below.
  *
  * <pre>{@code
  * {:year=>2001, :mon=>2, :mday=>3}
  * }</pre>
  *
- * @see <a href="https://ruby-doc.org/stdlib-2.5.1/libdoc/date/rdoc/Date.html#method-c-_strptime">Date._strptime</a>
+ * @see <a href="https://ruby-doc.org/stdlib-2.5.1/libdoc/date/rdoc/Date.html#method-c-_strptime">Ruby's Date._strptime</a>
  */
 public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
+    /**
+     * A converter for seconds with fraction parts to be stored as the required type in the result {@link java.util.Map}.
+     *
+     * <p>For example, the following implementation converts into Ruby's {@code Rational} object in JRuby.
+     *
+     * <pre>{@code
+     * import org.jruby.Ruby;
+     * import org.jruby.RubyRational;
+     *
+     * public class FractionToJRubyRationalConverter implements ParsedElementsQuery.FractionConverter {
+     *     public FractionToJRubyRationalConverter(final Ruby ruby) {
+     *         this.ruby = ruby;
+     *     }
+     *
+     *     public Object convertFraction(final int seconds, final int nanoOfSecond) {
+     *         return RubyRational.newRational(
+     *                 this.ruby, ((long) seconds * 1_000_000_000L) + (long) nanoOfSecond, 1_000_000_000L);
+     *     }
+     *
+     *     private final Ruby ruby;
+     * }
+     * }
+     * </pre>
+     */
     public static interface FractionConverter {
+        /**
+         * Converts a pair of a second and a fraction part of the second into an {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link ParsedElementsQuery}.
+         *
+         * @param seconds  the integer part of a second
+         * @param nanoOfSecond  the fraction part of a second
+         * @return an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map}, not null
+         */
         Object convertFraction(int seconds, int nanoOfSecond);
     }
 
+    /**
+     * A converter for keys of the result {@link java.util.Map} from {@link java.lang.String} to the required type.
+     *
+     * <p>For example, the following implementation converts into Ruby's {@code Symbol} object in JRuby.
+     *
+     * <pre>{@code
+     * import org.jruby.Ruby;
+     * import org.jruby.RubySymbol;
+     *
+     * public class HashKeyToJRubySymbolConverter implements ParsedElementsQuery.HashKeyConverter<RubySymbol> {
+     *     public HashKeyToJRubySymbolConverter(final Ruby ruby) {
+     *         this.ruby = ruby;
+     *     }
+     *
+     *     public RubySymbol convertHashKey(final String hashKey) {
+     *         return RubySymbol.newSymbol(this.ruby, hashKey);
+     *     }
+     *
+     *     private final Ruby ruby;
+     * }
+     * }
+     * </pre>
+     *
+     * @param <T>  the target type to be converted into
+     */
     public static interface HashKeyConverter<T> {
+        /**
+         * Converts a {@link java.lang.String} into the required type {@code <T>} as keys in the result {@link java.util.Map} of {@link ParsedElementsQuery}.
+         *
+         * @param hashKey  the hash key, not null
+         * @return the converted hash key object, not null
+         */
         T convertHashKey(String hashKey);
     }
 
@@ -38,20 +100,45 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
         this.hashKeyConverter = hashKeyConverter;
     }
 
+    /**
+     * Creates a query with seconds represented in {@link java.math.BigDecimal}.
+     *
+     * @return the query, not null
+     */
     public static ParsedElementsQuery<String> withFractionInBigDecimal() {
         return new ParsedElementsQuery<String>(FRACTION_TO_BIG_DECIMAL, STRING_AS_IS);
     }
 
+    /**
+     * Creates a query with seconds converted by the {@code fractionConverter}.
+     *
+     * @param fractionConverter  the converter to convert seconds with fraction parts, not null
+     * @return the query, not null
+     */
     public static ParsedElementsQuery<String> of(final FractionConverter fractionConverter) {
         return new ParsedElementsQuery<String>(fractionConverter, STRING_AS_IS);
     }
 
+    /**
+     * Creates a query with seconds converted by the {@code fractionConverter}, and keys converted by the {@code hashKeyConverter}.
+     *
+     * @param <U>  the key type of the result {@link java.util.Map}
+     * @param fractionConverter  the converter to convert seconds with fraction parts, not null
+     * @param hashKeyConverter  the converter to convert keys, not null
+     * @return the query, not null
+     */
     public static <U> ParsedElementsQuery<U> of(
             final FractionConverter fractionConverter,
             final HashKeyConverter<U> hashKeyConverter) {
         return new ParsedElementsQuery<U>(fractionConverter, hashKeyConverter);
     }
 
+    /**
+     * Queries the specified temporal object.
+     *
+     * @param temporal  the temporal object to query, not null
+     * @return the queried {@link java.util.Map}, not null
+     */
     @Override
     public Map<T, Object> queryFrom(final TemporalAccessor temporal) {
         final Builder<T> builder = new Builder<T>(temporal, this.fractionConverter, this.hashKeyConverter);

@@ -13,7 +13,7 @@ import java.time.temporal.TemporalQuery;
 import java.time.temporal.ValueRange;
 
 /**
- * Resolves date-time from {@code java.time.temporal.TemporalAccessor} parsed by {@code RubyDateTimeFormatter} by the same rule as Ruby's {@code Time.strptime}.
+ * Resolves {@link java.time.temporal.TemporalAccessor}, date-time data parsed by {@link RubyDateTimeFormatter}, with a rule close to Ruby's {@code Time.strptime}.
  *
  * <p>A difference from Ruby's {@code Time.strptime} is that it does not consider "now" and local time zone.
  * If the given zone is neither numerical nor predefined textual time zones, it returns defaultZoneOffset then.
@@ -81,10 +81,22 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
         this.defaultNanoOfSecond = defaultNanoOfSecond;
     }
 
+    /**
+     * Creates a resolver which does not accept empty elements.
+     *
+     * @return the resolver, not null
+     */
     public static DefaultRubyTimeResolver of() {
         return new DefaultRubyTimeResolver(false, ZoneOffset.UTC, 1970, 1, 1, 0, 0, 0, 0);
     }
 
+    /**
+     * Creates a resolver which accepts empty elements.
+     *
+     * <p>Empty elements are complemented from {@code 1970-01-01 00:00:00 UTC}.
+     *
+     * @return the resolver, not null
+     */
     public static DefaultRubyTimeResolver withEmptyAccepted() {
         return new DefaultRubyTimeResolver(true, ZoneOffset.UTC, 1970, 1, 1, 0, 0, 0, 0);
     }
@@ -178,6 +190,12 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
         private final OffsetDateTime resolvedDateTime;
     }
 
+    /**
+     * Resolves {@link java.time.temporal.TemporalAccessor}, date-time data parsed by {@link RubyDateTimeFormatter}, with a rule close to Ruby's {@code Time.strptime}.
+     *
+     * @param original  the original date-time data parsed by {@link RubyDateTimeFormatter}, not null
+     * @return the resolved temporal object, not null
+     */
     @Override
     public TemporalAccessor resolve(final TemporalAccessor original) throws RubyTimeResolveException {
         final String zone = original.query(RubyTemporalQueries.rubyTimeZone());
