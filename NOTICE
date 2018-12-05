@@ -1,6 +1,13 @@
 embulk-util-rubytime
 Copyright 2018 The Embulk Project
 
+This product includes some source code from Matz’s Ruby Interpreter.
+* Copyright (C) 1993-2013 Yukihiro Matsumoto. All rights reserved.
+* https://www.ruby-lang.org/
+* Licensed under the 2-clause BSDL
+* The copy from Matz’s Ruby Interpreter is used only for testing this product.
+* The binary distribution of this product does not include source code from Matz’s Ruby Interpreter.
+
 This product includes software from the test-unit project.
 * Copyright (c) Kouhei Sutou <kou@cozmixng.org>, Ryan Davis <ryand-ruby@zenspider.com> and Nathaniel Talbott <nathaniel@talbott.ws>
 * https://github.com/test-unit/test-unit
