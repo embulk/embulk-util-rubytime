@@ -19,39 +19,31 @@ package org.embulk.util.rubytime;
 import java.time.temporal.TemporalAccessor;
 
 /**
- * Formatter for printing and parsing date-time objects in a way similar to Ruby's {@code Time.strptime}.
+ * Formatter for printing and parsing date-time objects.
  *
  * <p>Methods in this class are designed to be similar to {@link java.time.format.DateTimeFormatter}.
+ *
+ * <p>Parsing is implemented as a two-phase operation like {@link java.time.format.DateTimeFormatter} does.
  */
 public final class RubyDateTimeFormatter {
-    private RubyDateTimeFormatter(final Format format) {
+    private RubyDateTimeFormatter(final Format format, final RubyDateTimeResolver resolver) {
         this.format = format;
+        this.resolver = resolver;
     }
 
     /**
-     * Creates a formatter using the specified pattern.
+     * Creates a formatter using the specified pattern with the default resolver similar to Ruby's {@code Time.strptime}.
      *
      * @param pattern  the pattern to use, not null
      *
      * @return the formatter based on the pattern, not null
      */
     public static RubyDateTimeFormatter ofPattern(final String pattern) {
-        return new RubyDateTimeFormatter(Format.compile(pattern));
+        return new RubyDateTimeFormatter(Format.compile(pattern), RubyDateTimeResolver.ofDefault());
     }
 
     /**
      * Parses the text using this formatter, without resolving the result, intended for advanced use cases.
-     *
-     * <p>Parsing is implemented as a two-phase operation as {@link java.time.format.DateTimeFormatter#parseUnresolved} does.
-     *
-     * <p>Note that epoch milliseconds (%Q) and epoch seconds (%s) are considered equally.
-     *
-     * <pre>{@code
-     * irb(main):002:0> Date._strptime("123456789 12849124", "%Q %s")
-     * => {:seconds=>12849124}
-     * irb(main):003:0> Date._strptime("123456789 12849124", "%s %Q")
-     * => {:seconds=>(3212281/250)}
-     * }</pre>
      *
      * @param text  the text to parse, not null
      *
@@ -60,8 +52,39 @@ public final class RubyDateTimeFormatter {
      * @throws RubyDateTimeParseException  if the parse results in an error
      */
     public TemporalAccessor parseUnresolved(final String text) {
-        return new ParserWithContext(text).parse(this.format);
+        return (new ParserWithContext(text)).parse(this.format);
+    }
+
+    /**
+     * Parses the text using this formatter and the registered resolver.
+     *
+     * @param text  the text to parse, not null
+     *
+     * @return the parsed temporal object, not null
+     *
+     * @throws RubyDateTimeParseException  if unable to parse the requested result
+     */
+    public TemporalAccessor parse(final String text) {
+        try {
+            return this.resolver.resolve(this.parseUnresolved(text));
+        } catch (final RubyDateTimeParseException ex) {
+            throw ex;
+        } catch (final RuntimeException ex) {
+            throw new RubyDateTimeParseException("Text '" + text + "' could not be parsed: " + ex.getMessage(), text, 0, ex);
+        }
+    }
+
+    /**
+     * Returns a copy of this formatter with a new resolver.
+     *
+     * @param resolver  the new resolver, not null
+     *
+     * @return a formatter based on this formatter with the requested resolver, not null
+     */
+    public RubyDateTimeFormatter withResolver(final RubyDateTimeResolver resolver) {
+        return new RubyDateTimeFormatter(this.format, resolver);
     }
 
     private final Format format;
+    private final RubyDateTimeResolver resolver;
 }

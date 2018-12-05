@@ -75,8 +75,8 @@ import java.time.temporal.ValueRange;
  *
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l431">Time.strptime</a>
  */
-public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
-    private DefaultRubyTimeResolver(
+final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
+    DefaultRubyTimeResolver(
             final boolean acceptsEmpty,
             final ZoneOffset defaultOffset,
             final int defaultYear,
@@ -95,26 +95,6 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
         this.defaultMinuteOfHour = defaultMinuteOfHour;
         this.defaultSecondOfMinute = defaultSecondOfMinute;
         this.defaultNanoOfSecond = defaultNanoOfSecond;
-    }
-
-    /**
-     * Creates a resolver which does not accept empty elements.
-     *
-     * @return the resolver, not null
-     */
-    public static DefaultRubyTimeResolver of() {
-        return new DefaultRubyTimeResolver(false, ZoneOffset.UTC, 1970, 1, 1, 0, 0, 0, 0);
-    }
-
-    /**
-     * Creates a resolver which accepts empty elements.
-     *
-     * <p>Empty elements are complemented from {@code 1970-01-01 00:00:00 UTC}.
-     *
-     * @return the resolver, not null
-     */
-    public static DefaultRubyTimeResolver withEmptyAccepted() {
-        return new DefaultRubyTimeResolver(true, ZoneOffset.UTC, 1970, 1, 1, 0, 0, 0, 0);
     }
 
     // TODO(dmikurube): Confirm whether prioritizing |original| over |resolved| is really correct.
@@ -213,15 +193,15 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
      * @return the resolved temporal object, not null
      */
     @Override
-    public TemporalAccessor resolve(final TemporalAccessor original) throws RubyTimeResolveException {
+    public TemporalAccessor resolve(final TemporalAccessor original) {
         final String zone = original.query(RubyTemporalQueries.rubyTimeZone());
         final ZoneOffset offset = TimeZones.toZoneOffset(zone, defaultOffset);
 
         if (offset == null) {
             if (zone == null) {
-                throw new RubyTimeResolveException("Empty time zone ID.");
+                throw new DateTimeException("Empty time zone ID.");
             } else {
-                throw new RubyTimeResolveException("Invalid time zone ID: '" + zone);
+                throw new DateTimeException("Invalid time zone ID: '" + zone);
             }
         }
 
@@ -285,8 +265,7 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
      *
      * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup#l208">apply_offset</a>
      */
-    private OffsetDateTime getOffsetAppliedDateTime(
-            final TemporalAccessor original, final ZoneOffset zoneOffset) throws RubyTimeResolveException {
+    private OffsetDateTime getOffsetAppliedDateTime(final TemporalAccessor original, final ZoneOffset zoneOffset) {
         final Boolean parsedLeapSecond = original.query(DateTimeFormatter.parsedLeapSecond());
         final Period parsedExcessDays = original.query(DateTimeFormatter.parsedExcessDays());
 
@@ -298,7 +277,7 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
                     && !original.isSupported(ChronoField.MINUTE_OF_HOUR)
                     && !original.isSupported(ChronoField.SECOND_OF_MINUTE)
                     && !original.isSupported(ChronoField.NANO_OF_SECOND)) {
-            throw new RubyTimeResolveException("No time information.");
+            throw new DateTimeException("No time information.");
         }
 
         int year = original.isSupported(ChronoField.YEAR)
@@ -350,7 +329,7 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
                 offset -= 24 * 60 * 60;
                 hourOfDay = 0;
             } else if (!parsedExcessDays.isZero()) {
-                throw new RubyTimeResolveException("Hour is not in the range of 0-24.");
+                throw new DateTimeException("Hour is not in the range of 0-24.");
             }
         }
 
@@ -432,26 +411,18 @@ public final class DefaultRubyTimeResolver implements RubyDateTimeResolver {
             }
         }
 
-        try {
-            return OffsetDateTime.of(
-                    year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, nanoOfSecond,
-                    ZoneOffset.UTC);
-        } catch (DateTimeException ex) {
-            throw new RubyTimeResolveException(ex);
-        }
+        return OffsetDateTime.of(
+                year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, nanoOfSecond, ZoneOffset.UTC);
     }
 
-    private int getWithDefaultOrThrow(
-            final TemporalAccessor original,
-            final TemporalField field,
-            final int defaultValue) throws RubyTimeResolveException {
+    private int getWithDefaultOrThrow(final TemporalAccessor original, final TemporalField field, final int defaultValue) {
         if (original.isSupported(field)) {
             return original.get(field);
         } else {
             if (this.acceptsEmpty) {
                 return defaultValue;
             } else {
-                throw new RubyTimeResolveException("No time information enough.");
+                throw new DateTimeException("No time information enough.");
             }
         }
     }
