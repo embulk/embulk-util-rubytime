@@ -23,6 +23,17 @@ module TimeMonkeyPatch
         formatter = Java::org.embulk.util.rubytime.RubyDateTimeFormatter.ofPattern(format)
 
         begin
+          parsedResolved = formatter.parse(date)
+        rescue Java::org.embulk.util.rubytime.RubyDateTimeParseException
+          raise ArgumentError
+        end
+
+        instant_seconds = parsedResolved.getLong(Java::java.time.temporal.ChronoField::INSTANT_SECONDS)
+        nano = parsedResolved.get(Java::java.time.temporal.ChronoField::NANO_OF_SECOND)
+
+        # TODO: Get the zone offset directly from the resolved object, not from the parsed object.
+        # Querying rubyTimeZone for the resolved object may fail as of now.
+        begin
           parsed = formatter.parseUnresolved(date)
         rescue Java::org.embulk.util.rubytime.RubyDateTimeParseException
           return nil
@@ -30,20 +41,8 @@ module TimeMonkeyPatch
         if parsed.nil?
           raise 'RubyDateTimeFormatter#parseUnresolved returned null unexpectedly.'
         end
-
-        resolver = Java::org.embulk.util.rubytime.DefaultRubyTimeResolver.of()
-
-        begin
-          resolved = resolver.resolve(parsed)
-        rescue Java::org.embulk.util.rubytime.RubyTimeResolveException
-          raise ArgumentError, "no time information in #{date.inspect}"
-        end
-
-        instant_seconds = resolved.getLong(Java::java.time.temporal.ChronoField::INSTANT_SECONDS)
-        nano = resolved.get(Java::java.time.temporal.ChronoField::NANO_OF_SECOND)
-
-        # TODO: Get the zone offset directly from the resolved object, not from the parsed object.
         zone_string = parsed.query(Java::org.embulk.util.rubytime.RubyTemporalQueries.rubyTimeZone())
+
         offset = Java::org.embulk.util.rubytime.TimeZones.toZoneOffset(
           zone_string, Java::java.time.ZoneOffset::UTC).getTotalSeconds()
 
