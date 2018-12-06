@@ -159,7 +159,7 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         final Builder<T> builder = new Builder<T>(temporal, this.decimalFractionConverter, this.mapKeyConverter);
 
         builder.put("mday", ChronoField.DAY_OF_MONTH);
-        builder.put("cwyear", RubyChronoField.WEEK_BASED_YEAR);
+        builder.put("cwyear", RubyChronoFields.WEEK_BASED_YEAR);
         builder.putHourOfDay();
         builder.put("yday", ChronoField.DAY_OF_YEAR);
         builder.putSecFraction();
@@ -167,11 +167,11 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         builder.put("mon", ChronoField.MONTH_OF_YEAR);
         builder.putInstantMillisecond();
         builder.putSecondOfMinute();
-        builder.put("wnum0", RubyChronoField.WEEK_OF_YEAR_STARTING_WITH_SUNDAY);
-        builder.put("wnum1", RubyChronoField.WEEK_OF_YEAR_STARTING_WITH_MONDAY);
-        builder.put("cwday", RubyChronoField.DAY_OF_WEEK_STARTING_WITH_MONDAY_1);
-        builder.put("cweek", RubyChronoField.WEEK_OF_WEEK_BASED_YEAR);
-        builder.put("wday", RubyChronoField.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0);
+        builder.put("wnum0", RubyChronoFields.WEEK_OF_YEAR_STARTING_WITH_SUNDAY);
+        builder.put("wnum1", RubyChronoFields.WEEK_OF_YEAR_STARTING_WITH_MONDAY);
+        builder.put("cwday", RubyChronoFields.DAY_OF_WEEK_STARTING_WITH_MONDAY_1);
+        builder.put("cweek", RubyChronoFields.WEEK_OF_WEEK_BASED_YEAR);
+        builder.put("wday", RubyChronoFields.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0);
         builder.put("year", ChronoField.YEAR);
 
         builder.putTimeZone();
@@ -231,8 +231,8 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         }
 
         private void putInstantMillisecond() {
-            if (this.temporal.isSupported(RubyChronoField.INSTANT_MILLIS)) {
-                final long instantMillisecond = this.temporal.getLong(RubyChronoField.INSTANT_MILLIS);
+            if (this.temporal.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
+                final long instantMillisecond = this.temporal.getLong(RubyChronoFields.INSTANT_MILLIS);
                 final int instantSecond = (int) (instantMillisecond / 1000);
                 final int nanoOfInstantSecond = (int) (instantMillisecond % 1000) * 1_000_000;
                 if (nanoOfInstantSecond == 0) {

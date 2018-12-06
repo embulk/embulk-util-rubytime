@@ -28,8 +28,8 @@ import java.util.Locale;
 /**
  * A Ruby-specific set of temporal fields.
  */
-public final class RubyChronoField {
-    private RubyChronoField() {
+public final class RubyChronoFields {
+    private RubyChronoFields() {
         // No instantiation.
     }
 
