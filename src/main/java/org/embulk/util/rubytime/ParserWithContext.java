@@ -18,6 +18,7 @@ package org.embulk.util.rubytime;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.Instant;
 import java.time.Year;
 
 final class ParserWithContext {
@@ -130,8 +131,8 @@ final class ParserWithContext {
                         break;
 
                     // %Q - Number of milliseconds since 1970-01-01 00:00:00 UTC.
-                    case MILLISECOND_SINCE_EPOCH:
-                        this.consumeMillisecondSinceEpoch(builder);
+                    case MILLISECONDS_SINCE_EPOCH:
+                        this.consumeMillisecondsSinceEpoch(builder);
                         break;
 
                     // %S - Second of the minute (00..59)
@@ -140,8 +141,8 @@ final class ParserWithContext {
                         break;
 
                     // %s - Number of seconds since 1970-01-01 00:00:00 UTC.
-                    case SECOND_SINCE_EPOCH:
-                        this.consumeSecondSinceEpoch(builder);
+                    case SECONDS_SINCE_EPOCH:
+                        this.consumeSecondsSinceEpoch(builder);
                         break;
 
                     // %U, %OU - Week number of the year.  The week starts with Sunday.  (00..53)
@@ -343,7 +344,7 @@ final class ParserWithContext {
         this.pos += MERID_NAMES[meridIndex].length();
     }
 
-    private void consumeMillisecondSinceEpoch(final Parsed.Builder builder) {
+    private void consumeMillisecondsSinceEpoch(final Parsed.Builder builder) {
         final boolean negative;
         if (isMinus(this.text, this.pos)) {
             negative = true;
@@ -356,16 +357,16 @@ final class ParserWithContext {
         // It is different from Ruby's Date._strptime / Time.strptime.
         //
         // Note that Instant.MAX.toEpochMillis() > Long.MAX_VALUE. Long.MAX_VALUE is considered as its maximum.
-        final long absoluteMillisecondSinceEpoch = this.consumeDigitsInLong(
-                Integer.MAX_VALUE, 0, Long.MAX_VALUE, "invalid millisecond since epoch");
-        builder.setInstantMilliseconds(negative ? -absoluteMillisecondSinceEpoch : absoluteMillisecondSinceEpoch);
+        final long absoluteMillisecondsSinceEpoch = this.consumeDigitsInLong(
+                Integer.MAX_VALUE, 0, Long.MAX_VALUE, "invalid milliseconds since epoch");
+        builder.setMillisecondsSinceEpoch(negative ? -absoluteMillisecondsSinceEpoch : absoluteMillisecondsSinceEpoch);
     }
 
     private void consumeSecondOfMinute(final Parsed.Builder builder) {
         builder.setSecondOfMinute(this.consumeDigitsInInt(2, 0, 60, "invalid second of minute"));
     }
 
-    private void consumeSecondSinceEpoch(final Parsed.Builder builder) {
+    private void consumeSecondsSinceEpoch(final Parsed.Builder builder) {
         final boolean negative;
         if (isMinus(this.text, this.pos)) {
             negative = true;
@@ -376,12 +377,9 @@ final class ParserWithContext {
 
         // JSR-310 accepts only [-1000000000-01-01T00:00Z, 1000000000-12-31T23:59:59.999999999Z] as an Instant.
         // It is different from Ruby's Date._strptime / Time.strptime.
-        //
-        // Note that Instant.MAX.toEpochMillis() > Long.MAX_VALUE. Long.MAX_VALUE / 1000 is considered as its maximum
-        // because it stores second since epoch internally as millisecond.
-        final long absoluteSecondSinceEpoch = this.consumeDigitsInLong(
-                Integer.MAX_VALUE, 0, Long.MAX_VALUE / 1000L, "invalid second since epoch");
-        builder.setInstantMilliseconds((negative ? -absoluteSecondSinceEpoch : absoluteSecondSinceEpoch) * 1000L);
+        final long absoluteSecondsSinceEpoch = this.consumeDigitsInLong(
+                Integer.MAX_VALUE, 0, Instant.MAX.getEpochSecond(), "invalid second since epoch");
+        builder.setSecondsSinceEpoch(negative ? -absoluteSecondsSinceEpoch : absoluteSecondsSinceEpoch);
     }
 
     private void consumeWeekOfYear(final Parsed.Builder builder, final FormatToken thisToken) {

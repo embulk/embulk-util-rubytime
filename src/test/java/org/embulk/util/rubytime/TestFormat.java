@@ -77,8 +77,8 @@ public class TestFormat {
         testFormat("%U", FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY.toTokens());
         testFormat("%W", FormatDirective.WEEK_OF_YEAR_STARTING_WITH_MONDAY.toTokens());
 
-        testFormat("%s", FormatDirective.SECOND_SINCE_EPOCH.toTokens());
-        testFormat("%Q", FormatDirective.MILLISECOND_SINCE_EPOCH.toTokens());
+        testFormat("%s", FormatDirective.SECONDS_SINCE_EPOCH.toTokens());
+        testFormat("%Q", FormatDirective.MILLISECONDS_SINCE_EPOCH.toTokens());
     }
 
     @Test

@@ -54,7 +54,8 @@ final class Parsed implements TemporalAccessor {
             final int nanoOfSecond,
             final int minuteOfHour,
             final int monthOfYear,
-            final long instantMilliseconds,
+            final long secondsSinceEpoch,
+            final int nanoOfSecondsSinceEpoch,
             final int secondOfMinute,
             final int weekOfYearStartingWithSunday,
             final int weekOfYearStartingWithMonday,
@@ -95,8 +96,11 @@ final class Parsed implements TemporalAccessor {
         if (monthOfYear > Integer.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.MONTH_OF_YEAR, (long) monthOfYear);
         }
-        if (instantMilliseconds > Long.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoFields.Field.INSTANT_MILLIS, instantMilliseconds);
+        if (secondsSinceEpoch > Long.MIN_VALUE) {
+            this.chronoFieldValues.put(ChronoField.INSTANT_SECONDS, secondsSinceEpoch);
+        }
+        if (nanoOfSecondsSinceEpoch > Integer.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.NANO_OF_INSTANT_SECONDS, (long) nanoOfSecondsSinceEpoch);
         }
         if (secondOfMinute > Integer.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.SECOND_OF_MINUTE, (long) secondOfMinute);
@@ -148,7 +152,8 @@ final class Parsed implements TemporalAccessor {
             this.minuteOfHour = Integer.MIN_VALUE;
             this.monthOfYear = Integer.MIN_VALUE;
             this.ampmOfDay = Integer.MIN_VALUE;
-            this.instantMilliseconds = Long.MIN_VALUE;
+            this.secondsSinceEpoch = Long.MIN_VALUE;
+            this.nanoOfSecondsSinceEpoch = Integer.MIN_VALUE;
             this.secondOfMinute = Integer.MIN_VALUE;
             this.weekOfYearStartingWithSunday = Integer.MIN_VALUE;
             this.weekOfYearStartingWithMonday = Integer.MIN_VALUE;
@@ -212,7 +217,8 @@ final class Parsed implements TemporalAccessor {
                     this.nanoOfSecond,
                     this.minuteOfHour,
                     this.monthOfYear,
-                    this.instantMilliseconds,
+                    this.secondsSinceEpoch,
+                    this.nanoOfSecondsSinceEpoch,
                     (this.secondOfMinute == 60 ? 59 : this.secondOfMinute),
                     this.weekOfYearStartingWithSunday,
                     this.weekOfYearStartingWithMonday,
@@ -415,16 +421,37 @@ final class Parsed implements TemporalAccessor {
         }
 
         /**
-         * Sets second since the epoch.
+         * Sets seconds since the epoch.
          *
          * <ul>
          * <li> Ruby Date._strptime hash key corresponding: seconds
-         * <li> Ruby strptime directive specifier related: %Q, %s
-         * <li> java.time.temporal: RubyChronoFields.INSTANT_MILLIS
+         * <li> Ruby strptime directive specifier related: %s
+         * <li> java.time.temporal: ChronoField.INSTANT_SECONDS
          * </ul>
          */
-        Builder setInstantMilliseconds(final long instantMilliseconds) {
-            this.instantMilliseconds = instantMilliseconds;
+        Builder setSecondsSinceEpoch(final long secondsSinceEpoch) {
+            this.secondsSinceEpoch = secondsSinceEpoch;
+            this.nanoOfSecondsSinceEpoch = 0;
+            return this;
+        }
+
+        /**
+         * Sets milliseconds since the epoch.
+         *
+         * <ul>
+         * <li> Ruby Date._strptime hash key corresponding: seconds
+         * <li> Ruby strptime directive specifier related: %Q
+         * <li> java.time.temporal: ChronoField.INSTANT_SECONDS, RubyChronoFields.MILLI_OF_INSTANT_SECONDS
+         * </ul>
+         */
+        Builder setMillisecondsSinceEpoch(final long millisecondsSinceEpoch) {
+            if (millisecondsSinceEpoch >= 0) {
+                this.secondsSinceEpoch = millisecondsSinceEpoch / 1000L;
+                this.nanoOfSecondsSinceEpoch = ((int) (millisecondsSinceEpoch % 1000L)) * 1000_000;
+            } else {
+                this.secondsSinceEpoch = millisecondsSinceEpoch / 1000L - 1;
+                this.nanoOfSecondsSinceEpoch = ((int) (millisecondsSinceEpoch % 1000L) + 1000) * 1000_000;
+            }
             return this;
         }
 
@@ -624,7 +651,8 @@ final class Parsed implements TemporalAccessor {
         private int minuteOfHour;
         private int monthOfYear;
         private int ampmOfDay;
-        private long instantMilliseconds;
+        private long secondsSinceEpoch;
+        private int nanoOfSecondsSinceEpoch;
         private int secondOfMinute;
         private int weekOfYearStartingWithSunday;
         private int weekOfYearStartingWithMonday;

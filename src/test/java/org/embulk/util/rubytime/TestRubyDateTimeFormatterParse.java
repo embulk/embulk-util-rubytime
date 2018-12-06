@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import org.junit.jupiter.api.Test;
 
@@ -32,10 +33,12 @@ public class TestRubyDateTimeFormatterParse {
     @Test
     public void testMultipleEpochs() {
         final TemporalAccessor parsed1 = strptime("123456789 12849124", "%Q %s");
-        assertEquals(1000L * 12849124L, parsed1.getLong(RubyChronoFields.Field.INSTANT_MILLIS));
+        assertEquals(12849124L, parsed1.getLong(ChronoField.INSTANT_SECONDS));
+        assertEquals(0, parsed1.get(RubyChronoFields.NANO_OF_INSTANT_SECONDS));
 
         final TemporalAccessor parsed2 = strptime("123456789 12849124", "%s %Q");
-        assertEquals(1000L * 3212281L / 250L, parsed2.getLong(RubyChronoFields.Field.INSTANT_MILLIS));
+        assertEquals(12849L, parsed2.getLong(ChronoField.INSTANT_SECONDS));
+        assertEquals(124000000, parsed2.get(RubyChronoFields.NANO_OF_INSTANT_SECONDS));
     }
 
     @Test
