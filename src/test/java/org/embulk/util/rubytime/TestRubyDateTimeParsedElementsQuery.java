@@ -23,9 +23,9 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests RubyParsedElementsQuery.
+ * Tests RubyDateTimeParsedElementsQuery.
  */
-public class TestParsedElementsQuery {
+public class TestRubyDateTimeParsedElementsQuery {
     @Test
     public void test() {
         final Parsed.Builder builder = Parsed.builder("foo");
@@ -35,7 +35,8 @@ public class TestParsedElementsQuery {
         builder.setWeekBasedYear(1998);
         builder.setLeftover("foobar");
         final Parsed parsed = builder.build();
-        final Map<String, Object> parsedElements = parsed.query(ParsedElementsQuery.withFractionInBigDecimal());
+        final Map<String, Object> parsedElements =
+                parsed.query(RubyDateTimeParsedElementsQuery.withDecimalFractionInBigDecimal());
 
         assertEquals(BigDecimal.valueOf(123456).add(BigDecimal.valueOf(789000000, 9)),
                      parsedElements.get("seconds"));

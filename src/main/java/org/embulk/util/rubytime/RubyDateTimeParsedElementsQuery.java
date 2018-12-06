@@ -38,24 +38,23 @@ import java.util.Map;
  *
  * @see <a href="https://ruby-doc.org/stdlib-2.5.1/libdoc/date/rdoc/Date.html#method-c-_strptime">Ruby's Date._strptime</a>
  */
-public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
+public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
     /**
-     * A converter for seconds with fraction parts to be stored as the required type in the result {@link java.util.Map}.
+     * A converter for a decimal fraction to be stored as the required type in the result {@link java.util.Map}.
      *
-     * <p>For example, the following implementation converts into Ruby's {@code Rational} object in JRuby.
+     * <p>For example, the following implementation converts a decimal fraction into Ruby's {@code Rational} object in JRuby.
      *
      * <pre>{@code
      * import org.jruby.Ruby;
      * import org.jruby.RubyRational;
      *
-     * public class FractionToJRubyRationalConverter implements ParsedElementsQuery.FractionConverter {
-     *     public FractionToJRubyRationalConverter(final Ruby ruby) {
+     * public class DecimalFractionToRationalConverter implements RubyDateTimeParsedElementsQuery.DecimalFractionConverter {
+     *     public DecimalFractionToRationalConverter(final Ruby ruby) {
      *         this.ruby = ruby;
      *     }
      *
-     *     public Object convertFraction(final int seconds, final int nanoOfSecond) {
-     *         return RubyRational.newRational(
-     *                 this.ruby, ((long) seconds * 1_000_000_000L) + (long) nanoOfSecond, 1_000_000_000L);
+     *     public Object convertDecimalFraction(final long integer, final int nano) {
+     *         return RubyRational.newRational(this.ruby, ((long) integer * 1_000_000_000L) + (long) nano, 1_000_000_000L);
      *     }
      *
      *     private final Ruby ruby;
@@ -63,15 +62,15 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
      * }
      * </pre>
      */
-    public static interface FractionConverter {
+    public static interface DecimalFractionConverter {
         /**
-         * Converts a pair of a second and a fraction part of the second into an {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link ParsedElementsQuery}.
+         * Converts a decimal fraction, a pair of an integer part and a fraction part, into an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link RubyDateTimeParsedElementsQuery}.
          *
-         * @param seconds  the integer part of a second
-         * @param nanoOfSecond  the fraction part of a second
+         * @param integer  the integer part
+         * @param nano  the fraction part in nano
          * @return an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map}, not null
          */
-        Object convertFraction(int seconds, int nanoOfSecond);
+        Object convertDecimalFraction(long integer, int nano);
     }
 
     /**
@@ -83,13 +82,13 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
      * import org.jruby.Ruby;
      * import org.jruby.RubySymbol;
      *
-     * public class HashKeyToJRubySymbolConverter implements ParsedElementsQuery.HashKeyConverter<RubySymbol> {
-     *     public HashKeyToJRubySymbolConverter(final Ruby ruby) {
+     * public class MapKeyToJRubySymbolConverter implements RubyDateTimeParsedElementsQuery.MapKeyConverter<RubySymbol> {
+     *     public MapKeyToJRubySymbolConverter(final Ruby ruby) {
      *         this.ruby = ruby;
      *     }
      *
-     *     public RubySymbol convertHashKey(final String hashKey) {
-     *         return RubySymbol.newSymbol(this.ruby, hashKey);
+     *     public RubySymbol convertMapKey(final String mapKey) {
+     *         return RubySymbol.newSymbol(this.ruby, mapKey);
      *     }
      *
      *     private final Ruby ruby;
@@ -99,21 +98,21 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
      *
      * @param <T>  the target type to be converted into
      */
-    public static interface HashKeyConverter<T> {
+    public static interface MapKeyConverter<T> {
         /**
-         * Converts a {@link java.lang.String} into the required type {@code <T>} as keys in the result {@link java.util.Map} of {@link ParsedElementsQuery}.
+         * Converts a {@link java.lang.String} into the required type {@code <T>} as keys in the result {@link java.util.Map} of {@link RubyDateTimeParsedElementsQuery}.
          *
-         * @param hashKey  the hash key, not null
-         * @return the converted hash key object, not null
+         * @param mapKey  the map key, not null
+         * @return the converted map key object, not null
          */
-        T convertHashKey(String hashKey);
+        T convertMapKey(String mapKey);
     }
 
-    private ParsedElementsQuery(
-            final FractionConverter fractionConverter,
-            final HashKeyConverter<T> hashKeyConverter) {
-        this.fractionConverter = fractionConverter;
-        this.hashKeyConverter = hashKeyConverter;
+    private RubyDateTimeParsedElementsQuery(
+            final DecimalFractionConverter decimalFractionConverter,
+            final MapKeyConverter<T> mapKeyConverter) {
+        this.decimalFractionConverter = decimalFractionConverter;
+        this.mapKeyConverter = mapKeyConverter;
     }
 
     /**
@@ -121,32 +120,32 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
      *
      * @return the query, not null
      */
-    public static ParsedElementsQuery<String> withFractionInBigDecimal() {
-        return new ParsedElementsQuery<String>(FRACTION_TO_BIG_DECIMAL, STRING_AS_IS);
+    public static RubyDateTimeParsedElementsQuery<String> withDecimalFractionInBigDecimal() {
+        return new RubyDateTimeParsedElementsQuery<String>(FRACTION_TO_BIG_DECIMAL, STRING_AS_IS);
     }
 
     /**
-     * Creates a query with seconds converted by the {@code fractionConverter}.
+     * Creates a query with seconds converted by the {@code decimalFractionConverter}.
      *
-     * @param fractionConverter  the converter to convert seconds with fraction parts, not null
+     * @param decimalFractionConverter  the converter to convert decimal fractions, not null
      * @return the query, not null
      */
-    public static ParsedElementsQuery<String> of(final FractionConverter fractionConverter) {
-        return new ParsedElementsQuery<String>(fractionConverter, STRING_AS_IS);
+    public static RubyDateTimeParsedElementsQuery<String> with(final DecimalFractionConverter decimalFractionConverter) {
+        return new RubyDateTimeParsedElementsQuery<String>(decimalFractionConverter, STRING_AS_IS);
     }
 
     /**
-     * Creates a query with seconds converted by the {@code fractionConverter}, and keys converted by the {@code hashKeyConverter}.
+     * Creates a query with seconds converted by the {@code decimalFractionConverter}, and map keys converted by the {@code mapKeyConverter}.
      *
      * @param <U>  the key type of the result {@link java.util.Map}
-     * @param fractionConverter  the converter to convert seconds with fraction parts, not null
-     * @param hashKeyConverter  the converter to convert keys, not null
+     * @param decimalFractionConverter  the converter to convert decimal fractions, not null
+     * @param mapKeyConverter  the converter to convert map keys, not null
      * @return the query, not null
      */
-    public static <U> ParsedElementsQuery<U> of(
-            final FractionConverter fractionConverter,
-            final HashKeyConverter<U> hashKeyConverter) {
-        return new ParsedElementsQuery<U>(fractionConverter, hashKeyConverter);
+    public static <U> RubyDateTimeParsedElementsQuery<U> with(
+            final DecimalFractionConverter decimalFractionConverter,
+            final MapKeyConverter<U> mapKeyConverter) {
+        return new RubyDateTimeParsedElementsQuery<U>(decimalFractionConverter, mapKeyConverter);
     }
 
     /**
@@ -157,7 +156,7 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
      */
     @Override
     public Map<T, Object> queryFrom(final TemporalAccessor temporal) {
-        final Builder<T> builder = new Builder<T>(temporal, this.fractionConverter, this.hashKeyConverter);
+        final Builder<T> builder = new Builder<T>(temporal, this.decimalFractionConverter, this.mapKeyConverter);
 
         builder.put("mday", ChronoField.DAY_OF_MONTH);
         builder.put("cwyear", RubyChronoField.WEEK_BASED_YEAR);
@@ -184,17 +183,17 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
     private static class Builder<T> {
         private Builder(
                 final TemporalAccessor temporal,
-                final FractionConverter fractionConverterInner,
-                final HashKeyConverter<T> hashKeyConverter) {
+                final DecimalFractionConverter decimalFractionConverterInner,
+                final MapKeyConverter<T> mapKeyConverter) {
             this.temporal = temporal;
-            this.fractionConverterInner = fractionConverterInner;
-            this.hashKeyConverter = hashKeyConverter;
+            this.decimalFractionConverterInner = decimalFractionConverterInner;
+            this.mapKeyConverter = mapKeyConverter;
             this.built = new HashMap<>();
         }
 
         private void put(final String key, final TemporalField field) {
             if (this.temporal.isSupported(field)) {
-                this.built.put(this.hashKeyConverter.convertHashKey(key), this.temporal.get(field));
+                this.built.put(this.mapKeyConverter.convertMapKey(key), this.temporal.get(field));
             }
         }
 
@@ -202,12 +201,12 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
             if (this.temporal.isSupported(ChronoField.HOUR_OF_DAY)) {
                 final Period parsedExcessDays = this.temporal.query(DateTimeFormatter.parsedExcessDays());
                 if (parsedExcessDays == null || parsedExcessDays.isZero()) {
-                    this.built.put(this.hashKeyConverter.convertHashKey("hour"),
+                    this.built.put(this.mapKeyConverter.convertMapKey("hour"),
                                    this.temporal.get(ChronoField.HOUR_OF_DAY));
                 } else if (parsedExcessDays.getDays() == 1
                                    && parsedExcessDays.getMonths() == 0
                                    && parsedExcessDays.getYears() == 0) {
-                    this.built.put(this.hashKeyConverter.convertHashKey("hour"), 24);
+                    this.built.put(this.mapKeyConverter.convertMapKey("hour"), 24);
                 }
             }
         }
@@ -215,9 +214,9 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
         private void putSecondOfMinute() {
             if (this.temporal.isSupported(ChronoField.SECOND_OF_MINUTE)) {
                 if (this.temporal.query(DateTimeFormatter.parsedLeapSecond())) {
-                    this.built.put(this.hashKeyConverter.convertHashKey("sec"), 60);
+                    this.built.put(this.mapKeyConverter.convertMapKey("sec"), 60);
                 } else {
-                    this.built.put(this.hashKeyConverter.convertHashKey("sec"),
+                    this.built.put(this.mapKeyConverter.convertMapKey("sec"),
                                    this.temporal.get(ChronoField.SECOND_OF_MINUTE));
                 }
             }
@@ -225,8 +224,8 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
 
         private void putSecFraction() {
             if (this.temporal.isSupported(ChronoField.NANO_OF_SECOND)) {
-                this.built.put(this.hashKeyConverter.convertHashKey("sec_fraction"),
-                               this.fractionConverterInner.convertFraction(
+                this.built.put(this.mapKeyConverter.convertMapKey("sec_fraction"),
+                               this.decimalFractionConverterInner.convertDecimalFraction(
                                        0, this.temporal.get(ChronoField.NANO_OF_SECOND)));
             }
         }
@@ -237,10 +236,10 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
                 final int instantSecond = (int) (instantMillisecond / 1000);
                 final int nanoOfInstantSecond = (int) (instantMillisecond % 1000) * 1_000_000;
                 if (nanoOfInstantSecond == 0) {
-                    this.built.put(this.hashKeyConverter.convertHashKey("seconds"), instantSecond);
+                    this.built.put(this.mapKeyConverter.convertMapKey("seconds"), instantSecond);
                 } else {
-                    this.built.put(this.hashKeyConverter.convertHashKey("seconds"),
-                                   this.fractionConverterInner.convertFraction(
+                    this.built.put(this.mapKeyConverter.convertMapKey("seconds"),
+                                   this.decimalFractionConverterInner.convertDecimalFraction(
                                            instantSecond, nanoOfInstantSecond));
                 }
             }
@@ -251,16 +250,16 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
             if (zone != null) {
                 final int offset = DateZones.toOffsetInSeconds(zone);
                 if (offset != Integer.MIN_VALUE) {
-                    this.built.put(this.hashKeyConverter.convertHashKey("offset"), offset);
+                    this.built.put(this.mapKeyConverter.convertMapKey("offset"), offset);
                 }
-                this.built.put(this.hashKeyConverter.convertHashKey("zone"), zone);
+                this.built.put(this.mapKeyConverter.convertMapKey("zone"), zone);
             }
         }
 
         private void putLeftover() {
             final String leftover = temporal.query(RubyTemporalQueries.leftover());
             if (leftover != null) {
-                this.built.put(this.hashKeyConverter.convertHashKey("leftover"), leftover);
+                this.built.put(this.mapKeyConverter.convertMapKey("leftover"), leftover);
             }
         }
 
@@ -269,33 +268,33 @@ public final class ParsedElementsQuery<T> implements TemporalQuery<Map<T, Object
         }
 
         private final TemporalAccessor temporal;
-        private final FractionConverter fractionConverterInner;
-        private final HashKeyConverter<T> hashKeyConverter;
+        private final DecimalFractionConverter decimalFractionConverterInner;
+        private final MapKeyConverter<T> mapKeyConverter;
         private final HashMap<T, Object> built;
     }
 
-    private static final FractionToBigDecimalConverter FRACTION_TO_BIG_DECIMAL;
-    private static final HashKeyConverter<String> STRING_AS_IS;
+    private static final DecimalFractionToBigDecimalConverter FRACTION_TO_BIG_DECIMAL;
+    private static final StringAsIs STRING_AS_IS;
 
-    private final static class FractionToBigDecimalConverter implements FractionConverter {
+    private final static class DecimalFractionToBigDecimalConverter implements DecimalFractionConverter {
         @Override
-        public Object convertFraction(final int seconds, final int nanoOfSecond) {
-            return BigDecimal.valueOf(seconds).add(BigDecimal.valueOf(nanoOfSecond, 9));
+        public Object convertDecimalFraction(final long integer, final int nano) {
+            return BigDecimal.valueOf(integer).add(BigDecimal.valueOf(nano, 9));
         }
     }
 
-    private final static class StringAsIs implements HashKeyConverter<String> {
+    private final static class StringAsIs implements MapKeyConverter<String> {
         @Override
-        public String convertHashKey(final String hashKey) {
-            return hashKey;
+        public String convertMapKey(final String mapKey) {
+            return mapKey;
         }
     }
 
     static {
-        FRACTION_TO_BIG_DECIMAL = new FractionToBigDecimalConverter();
+        FRACTION_TO_BIG_DECIMAL = new DecimalFractionToBigDecimalConverter();
         STRING_AS_IS = new StringAsIs();
     }
 
-    private final FractionConverter fractionConverter;
-    private final HashKeyConverter<T> hashKeyConverter;
+    private final DecimalFractionConverter decimalFractionConverter;
+    private final MapKeyConverter<T> mapKeyConverter;
 }
