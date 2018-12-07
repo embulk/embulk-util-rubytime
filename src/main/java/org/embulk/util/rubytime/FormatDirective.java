@@ -91,8 +91,8 @@ enum FormatDirective {
 
     // Seconds since the Epoch:
 
-    SECOND_SINCE_EPOCH(true, 's'),
-    MILLISECOND_SINCE_EPOCH(false, 'Q'),  // TODO: Revisit this "%Q" is not a numeric pattern?
+    SECONDS_SINCE_EPOCH(true, 's'),
+    MILLISECONDS_SINCE_EPOCH(false, 'Q'),  // TODO: Revisit this "%Q" is not a numeric pattern?
 
     // Recurred:
 

@@ -29,7 +29,7 @@ public class TestRubyDateTimeParsedElementsQuery {
     @Test
     public void test() {
         final Parsed.Builder builder = Parsed.builder("foo");
-        builder.setInstantMilliseconds(123456789);
+        builder.setMillisecondsSinceEpoch(123456789);
         builder.setHour(11);
         builder.setDayOfYear(92);
         builder.setWeekBasedYear(1998);

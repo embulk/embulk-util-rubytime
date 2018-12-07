@@ -165,7 +165,7 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         builder.putSecFraction();
         builder.put("min", ChronoField.MINUTE_OF_HOUR);
         builder.put("mon", ChronoField.MONTH_OF_YEAR);
-        builder.putInstantMillisecond();
+        builder.putInstantSeconds();
         builder.putSecondOfMinute();
         builder.put("wnum0", RubyChronoFields.WEEK_OF_YEAR_STARTING_WITH_SUNDAY);
         builder.put("wnum1", RubyChronoFields.WEEK_OF_YEAR_STARTING_WITH_MONDAY);
@@ -230,17 +230,21 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
             }
         }
 
-        private void putInstantMillisecond() {
-            if (this.temporal.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
-                final long instantMillisecond = this.temporal.getLong(RubyChronoFields.INSTANT_MILLIS);
-                final int instantSecond = (int) (instantMillisecond / 1000);
-                final int nanoOfInstantSecond = (int) (instantMillisecond % 1000) * 1_000_000;
-                if (nanoOfInstantSecond == 0) {
-                    this.built.put(this.mapKeyConverter.convertMapKey("seconds"), instantSecond);
+        private void putInstantSeconds() {
+            if (this.temporal.isSupported(ChronoField.INSTANT_SECONDS)) {
+                final long instantSeconds = this.temporal.getLong(ChronoField.INSTANT_SECONDS);
+                final int nanoOfInstantSeconds;
+                if (this.temporal.isSupported(ChronoField.INSTANT_SECONDS)) {
+                    nanoOfInstantSeconds = this.temporal.get(RubyChronoFields.NANO_OF_INSTANT_SECONDS);
+                } else {
+                    nanoOfInstantSeconds = 0;
+                }
+                if (nanoOfInstantSeconds == 0) {
+                    this.built.put(this.mapKeyConverter.convertMapKey("seconds"), instantSeconds);
                 } else {
                     this.built.put(this.mapKeyConverter.convertMapKey("seconds"),
                                    this.decimalFractionConverterInner.convertDecimalFraction(
-                                           instantSecond, nanoOfInstantSecond));
+                                           instantSeconds, nanoOfInstantSeconds));
                 }
             }
         }

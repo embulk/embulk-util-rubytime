@@ -39,9 +39,9 @@ public final class RubyChronoFields {
     public static final TemporalField WEEK_BASED_YEAR = Field.WEEK_BASED_YEAR;
 
     /**
-     * The instant epoch-milliseconds.
+     * The nano-of-instant epoch-seconds.
      */
-    public static final TemporalField INSTANT_MILLIS = Field.INSTANT_MILLIS;
+    public static final TemporalField NANO_OF_INSTANT_SECONDS = Field.NANO_OF_INSTANT_SECONDS;
 
     /**
      * The week number of the year, with the week starting with Sunday (00..53).
@@ -76,11 +76,11 @@ public final class RubyChronoFields {
                 ValueRange.of(Year.MIN_VALUE, Year.MAX_VALUE),
                 true,
                 false),
-        INSTANT_MILLIS(
-                "InstantMillis",
-                ChronoUnit.MILLIS,
-                ChronoUnit.FOREVER,
-                ValueRange.of(Long.MIN_VALUE, Long.MAX_VALUE),
+        NANO_OF_INSTANT_SECONDS(
+                "NanoOfInstantSeconds",
+                ChronoUnit.NANOS,
+                ChronoUnit.SECONDS,
+                ValueRange.of(0, 999_999_999),
                 false,
                 true),
         WEEK_OF_YEAR_STARTING_WITH_SUNDAY(

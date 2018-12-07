@@ -205,16 +205,15 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             }
         }
 
-        if (original.isSupported(RubyChronoFields.INSTANT_MILLIS)
-                    || original.isSupported(ChronoField.INSTANT_SECONDS)) {
-            final long instantMilliseconds;
-            if (original.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
-                instantMilliseconds = original.getLong(RubyChronoFields.INSTANT_MILLIS);
-            } else {  // ChronoField.INSTANT_SECONDS should be supported at this point.
-                instantMilliseconds = original.getLong(ChronoField.INSTANT_SECONDS) * 1000;
+        if (original.isSupported(ChronoField.INSTANT_SECONDS)) {
+            final long instantSeconds = original.getLong(ChronoField.INSTANT_SECONDS);
+            final Instant instant;
+            if (original.isSupported(RubyChronoFields.NANO_OF_INSTANT_SECONDS)) {
+                instant = Instant.ofEpochSecond(instantSeconds, original.get(RubyChronoFields.NANO_OF_INSTANT_SECONDS));
+            } else {
+                instant = Instant.ofEpochSecond(instantSeconds);
             }
 
-            final Instant instant;
             if (original.isSupported(ChronoField.NANO_OF_SECOND)) {
                 // The fraction part is "added" to the epoch second in case both are specified.
                 // irb(main):002:0> Time.strptime("1500000000.123456789", "%s.%N").nsec
@@ -232,15 +231,14 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                 // irb(main):004:0> Time.at(Rational(1500000000789, 1000), 100123).nsec
                 // => 889123000
                 final int nanoOfSecond = original.get(ChronoField.NANO_OF_SECOND);
-                if (instantMilliseconds >= 0) {
-                    instant = Instant.ofEpochMilli(instantMilliseconds).plusNanos(nanoOfSecond);
+                if (instantSeconds >= 0) {
+                    return new ResolvedFromInstant(instant.plusNanos(nanoOfSecond));
                 } else {
-                    instant = Instant.ofEpochMilli(instantMilliseconds).minusNanos(nanoOfSecond);
+                    return new ResolvedFromInstant(instant.minusNanos(nanoOfSecond));
                 }
             } else {
-                instant = Instant.ofEpochMilli(instantMilliseconds);
+                return new ResolvedFromInstant(instant);
             }
-
             // TODO: Store the zone offset information in Resolved, instead of ZoneOffset.UTC.
             //
             // INSTANT_SECONDS by itself is always a value as of UTC, but results of
@@ -252,7 +250,6 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             //    assert_equal(3600, t.utc_offset)
             //
             // The test is working-around it by getting zone offset from Parsed, not Resolved.
-            return new ResolvedFromInstant(instant);
         }
 
         return new ResolvedFromOffsetDateTime(original, this.getOffsetAppliedDateTime(original, offset));
