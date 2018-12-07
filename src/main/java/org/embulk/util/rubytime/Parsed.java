@@ -72,13 +72,13 @@ final class Parsed implements TemporalAccessor {
         this.originalString = originalString;
 
         this.chronoFieldValues = new EnumMap<>(ChronoField.class);
-        this.rubyChronoFieldValues = new EnumMap<>(RubyChronoField.Field.class);
+        this.rubyChronoFieldValues = new EnumMap<>(RubyChronoFields.Field.class);
 
         if (dayOfMonth > Integer.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.DAY_OF_MONTH, (long) dayOfMonth);
         }
         if (weekBasedYear > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_BASED_YEAR, (long) weekBasedYear);
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.WEEK_BASED_YEAR, (long) weekBasedYear);
         }
         if (hour > Integer.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.HOUR_OF_DAY, (long) hour);
@@ -96,29 +96,29 @@ final class Parsed implements TemporalAccessor {
             this.chronoFieldValues.put(ChronoField.MONTH_OF_YEAR, (long) monthOfYear);
         }
         if (instantMilliseconds > Long.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.INSTANT_MILLIS, instantMilliseconds);
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.INSTANT_MILLIS, instantMilliseconds);
         }
         if (secondOfMinute > Integer.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.SECOND_OF_MINUTE, (long) secondOfMinute);
         }
         if (weekOfYearStartingWithSunday > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_OF_YEAR_STARTING_WITH_SUNDAY,
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.WEEK_OF_YEAR_STARTING_WITH_SUNDAY,
                                            (long) weekOfYearStartingWithSunday);
         }
         if (weekOfYearStartingWithMonday > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_OF_YEAR_STARTING_WITH_MONDAY,
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.WEEK_OF_YEAR_STARTING_WITH_MONDAY,
                                            (long) weekOfYearStartingWithMonday);
         }
         if (dayOfWeekStartingWithMonday1 > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.DAY_OF_WEEK_STARTING_WITH_MONDAY_1,
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.DAY_OF_WEEK_STARTING_WITH_MONDAY_1,
                                            (long) dayOfWeekStartingWithMonday1);
         }
         if (weekOfWeekBasedYear > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.WEEK_OF_WEEK_BASED_YEAR,
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.WEEK_OF_WEEK_BASED_YEAR,
                                            (long) weekOfWeekBasedYear);
         }
         if (dayOfWeekStartingWithSunday0 > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoField.Field.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0,
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0,
                                            (long) dayOfWeekStartingWithSunday0);
         }
         if (year > Integer.MIN_VALUE) {
@@ -420,7 +420,7 @@ final class Parsed implements TemporalAccessor {
          * <ul>
          * <li> Ruby Date._strptime hash key corresponding: seconds
          * <li> Ruby strptime directive specifier related: %Q, %s
-         * <li> java.time.temporal: RubyChronoField.INSTANT_MILLIS
+         * <li> java.time.temporal: RubyChronoFields.INSTANT_MILLIS
          * </ul>
          */
         Builder setInstantMilliseconds(final long instantMilliseconds) {
@@ -652,7 +652,7 @@ final class Parsed implements TemporalAccessor {
                 throw new UnsupportedTemporalTypeException("");
             }
             return (long) value;
-        } else if (field instanceof RubyChronoField.Field) {
+        } else if (field instanceof RubyChronoFields.Field) {
             final Long value = this.rubyChronoFieldValues.get(field);
             if (value == null) {
                 throw new UnsupportedTemporalTypeException("");
@@ -666,7 +666,7 @@ final class Parsed implements TemporalAccessor {
     public boolean isSupported(final TemporalField field) {
         if (field instanceof ChronoField) {
             return this.chronoFieldValues.containsKey(field);
-        } else if (field instanceof RubyChronoField.Field) {
+        } else if (field instanceof RubyChronoFields.Field) {
             return this.rubyChronoFieldValues.containsKey(field);
         }
         throw new UnsupportedTemporalTypeException("");
@@ -690,7 +690,7 @@ final class Parsed implements TemporalAccessor {
 
     @Override
     public ValueRange range(final TemporalField field) {
-        if (field instanceof RubyChronoField.Field && isSupported(field)) {
+        if (field instanceof RubyChronoFields.Field && isSupported(field)) {
             return field.range();
         }
         return TemporalAccessor.super.range(field);
@@ -699,7 +699,7 @@ final class Parsed implements TemporalAccessor {
     private final String originalString;
 
     private final EnumMap<ChronoField, Long> chronoFieldValues;
-    private final EnumMap<RubyChronoField.Field, Long> rubyChronoFieldValues;
+    private final EnumMap<RubyChronoFields.Field, Long> rubyChronoFieldValues;
 
     private final String timeZoneName;
 

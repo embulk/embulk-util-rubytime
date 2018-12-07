@@ -205,11 +205,11 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             }
         }
 
-        if (original.isSupported(RubyChronoField.INSTANT_MILLIS)
+        if (original.isSupported(RubyChronoFields.INSTANT_MILLIS)
                     || original.isSupported(ChronoField.INSTANT_SECONDS)) {
             final long instantMilliseconds;
-            if (original.isSupported(RubyChronoField.INSTANT_MILLIS)) {
-                instantMilliseconds = original.getLong(RubyChronoField.INSTANT_MILLIS);
+            if (original.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
+                instantMilliseconds = original.getLong(RubyChronoFields.INSTANT_MILLIS);
             } else {  // ChronoField.INSTANT_SECONDS should be supported at this point.
                 instantMilliseconds = original.getLong(ChronoField.INSTANT_SECONDS) * 1000;
             }
