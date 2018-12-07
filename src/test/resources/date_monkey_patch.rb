@@ -31,9 +31,9 @@ module DateMonkeyPatch
           raise 'RubyDateTimeFormatter#parseUnresolved returned null unexpectedly.'
         end
 
-        map = parsed.query(Java::org.embulk.util.rubytime.ParsedElementsQuery.of(
-                             Java::org.embulk.util.rubytime.FractionToJRubyRationalConverter.new(JRuby.runtime),
-                             Java::org.embulk.util.rubytime.HashKeyToJRubySymbolConverter.new(JRuby.runtime)))
+        map = parsed.query(Java::org.embulk.util.rubytime.RubyDateTimeParsedElementsQuery.with(
+                             Java::org.embulk.util.rubytime.DecimalFractionToRationalConverter.new(JRuby.runtime),
+                             Java::org.embulk.util.rubytime.MapKeyToSymbolConverter.new(JRuby.runtime)))
 
         return map.nil? ? nil : map.to_hash
       end

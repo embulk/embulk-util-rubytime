@@ -19,14 +19,14 @@ package org.embulk.util.rubytime;
 import org.jruby.Ruby;
 import org.jruby.RubySymbol;
 
-public class HashKeyToJRubySymbolConverter implements ParsedElementsQuery.HashKeyConverter<RubySymbol> {
-    public HashKeyToJRubySymbolConverter(final Ruby ruby) {
+public class MapKeyToSymbolConverter implements RubyDateTimeParsedElementsQuery.MapKeyConverter<RubySymbol> {
+    public MapKeyToSymbolConverter(final Ruby ruby) {
         this.ruby = ruby;
     }
 
     @Override
-    public RubySymbol convertHashKey(final String hashKey) {
-        return RubySymbol.newSymbol(this.ruby, hashKey);
+    public RubySymbol convertMapKey(final String mapKey) {
+        return RubySymbol.newSymbol(this.ruby, mapKey);
     }
 
     private final Ruby ruby;
