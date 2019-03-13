@@ -17,11 +17,11 @@ compileJava.options.encoding = "UTF-8"
 compileTestJava.options.encoding = "UTF-8"
 
 javadoc {
-    title = "${project.name} ${project.version}"
+    title = "${project.name} v${project.version}"
     options {
         locale = "en_US"
         encoding = "UTF-8"
-        overview = "src/main/java/overview.html"
+        overview = "src/main/html/overview.html"
         links "https://docs.oracle.com/javase/8/docs/api/"
     }
 }
