@@ -20,14 +20,21 @@ import java.time.ZoneOffset;
 import java.util.Locale;
 
 /**
- * Emulates parsing a zone in the manner of Ruby's Time.
+ * This class contains a {@code static} method to interpret a timezone string
+ * in the manner of Ruby's {@code Time} class.
  *
- * <p>{@code Time}'s parsing is different from {@code Date}'s parsing. For example,
- * {@code Date} recognizes {@code "CEST"} while {@code Time} does not recognize.
- * Both recognizes {@code "PST"}, though.
+ * <p>Ruby's {@code Date} and {@code DateTime} classes accept a superset of
+ * timezone strings which are accepted by Ruby's {@code Time} class. Ruby's
+ * {@code Time.strptime} internally calls {@code Date._strptime} just to expand
+ * a date-time string into elements, and then resolves the expanded elements by
+ * {@code Time}'s own way. In other words, some timezone strings are recognized
+ * once by {@code Date._strptime} at first, and then by {@code Time.strptime}
+ * ignores them.
  *
- * <code>
- * $ env TZ=UTC irb
+ * <p>For example, {@code Date} recognizes {@code "CEST"} although {@code Time}
+ * does not recognize it. On the other hand, both recognizes {@code "PST"}.
+ *
+ * <pre>{@code $ env TZ=UTC irb
  * irb(main):001:0> require 'date'
  * => true
  * irb(main):002:0> require 'time'
@@ -35,78 +42,58 @@ import java.util.Locale;
  *
  * irb(main):003:0> Date._strptime("CEST", "%z")
  * => {:zone=>"CEST", :offset=>7200}
+ *
  * irb(main):004:0> DateTime.strptime("2017-12-31 12:34:56 CEST", "%Y-%m-%d %H:%M:%S %z")
  * => #<DateTime: 2017-12-31T12:34:56+02:00 ((2458119j,38096s,0n),+7200s,2299161j)>
+ *
  * irb(main):005:0> Time.strptime("2017-12-31 12:34:56 CEST", "%Y-%m-%d %H:%M:%S %z")
  * => 2017-12-31 12:34:56 +0000
  *
  * irb(main):006:0> Date._strptime("PST", "%z")
  * => {:zone=>"PST", :offset=>-28800}
+ *
  * irb(main):007:0> DateTime.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
  * => #<DateTime: 2017-12-31T12:34:56-08:00 ((2458119j,74096s,0n),-28800s,2299161j)>
+ *
  * irb(main):008:0> Time.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
- * => 2017-12-31 12:34:56 -0800
- * </code>
- *
- * This class is public only to be called from DynamicColumnSetterFactory and DynamicPageBuilder.
- * It is not guaranteed to use this class from plugins. This class may be moved, renamed, or removed.
- *
- * A part of this class is reimplementation of Ruby v2.3.1's lib/time.rb. See its COPYING for license.
- *
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
+ * => 2017-12-31 12:34:56 -0800}</pre>
  */
-final class TimeZones {
-    private TimeZones() {
+public final class RubyTimeZones {
+    private RubyTimeZones() {
         // No instantiation.
     }
 
     /**
-     * Converts a zone to an offset in seconds.
+     * Converts a timezone string into {@link java.time.ZoneOffset} in the manner
+     * of Ruby's {@code Time} class.
      *
-     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l134">zone_offset</a>
+     * <p>Note that it has a difference from Ruby {@code Time.strptime}, where it
+     * does not consider the local timezone. It returns {@code defaultZoneOffset}
+     * if the given timezone string is invalid -- neither numerical nor predefined
+     * textual timezone names. In contrast, Ruby's {@code Time.strptime} considers
+     * the local timezone in that case.
+     *
+     * @param zoneName  a timezone string
+     * @param defaultZoneOffset  a {@link java.time.ZoneOffset} for default
+     *
+     * @return a {@link java.time.ZoneOffset} converted
+     *
+     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l134">zone_offset in Ruby</a>
      */
-    public static int toOffsetInSeconds(final String zone) {
-        if (zone == null || zone.isEmpty()) {
-            return Integer.MIN_VALUE;
-        }
-
-        if (zone.charAt(0) == '+' || zone.charAt(0) == '-') {
-            return extractOffsetRepresentation(zone);
-        }
-
-        // NOTE: String#toUpperCase does not create a new instance when unnecessary.
-        final int offsetInHours = mapZoneNametoOffsetInHours(zone.toUpperCase(Locale.ENGLISH));
-        if (offsetInHours == Integer.MIN_VALUE) {
-            return Integer.MIN_VALUE;
-        }
-        return offsetInHours * 3600;
-    }
-
-    /**
-     * Parses a time zone ID to java.time.ZoneOffset basically in the same rule with Ruby v2.3.1's Time.strptime.
-     *
-     * The only difference from Ruby v2.3.1's Time.strptime is that it does not consider local time zone.
-     * If the given zone is neither numerical nor predefined textual time zones, it returns defaultZoneOffset then.
-     *
-     * The method is reimplemented based on zone_offset from Ruby v2.3.1's lib/time.rb.
-     *
-     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup#l134">zone_offset</a>
-     */
-    public static ZoneOffset toZoneOffset(final String zone, final ZoneOffset defaultZoneOffset) {
-        if (zone == null || zone.isEmpty()) {
+    public static ZoneOffset toZoneOffset(final String zoneName, final ZoneOffset defaultZoneOffset) {
+        if (zoneName == null || zoneName.isEmpty()) {
             return defaultZoneOffset;
         }
 
-        if (zone.charAt(0) == '+' || zone.charAt(0) == '-') {
-            if (matchesOffsetRepresentation(zone)) {
-                return ZoneOffset.of(zone);  // Delegates parsing to java.time.ZoneOffset.
+        if (zoneName.charAt(0) == '+' || zoneName.charAt(0) == '-') {
+            if (matchesOffsetRepresentation(zoneName)) {
+                return ZoneOffset.of(zoneName);  // Delegates parsing to java.time.ZoneOffset.
             }
             return defaultZoneOffset;
         }
 
         // NOTE: String#toUpperCase does not create a new instance when unnecessary.
-        final ZoneOffset zoneOffset = mapZoneNametoZoneOffset(zone.toUpperCase(Locale.ENGLISH));
+        final ZoneOffset zoneOffset = mapZoneNametoZoneOffset(zoneName.toUpperCase(Locale.ENGLISH));
         if (zoneOffset != null) {
             return zoneOffset;
         }
@@ -180,70 +167,24 @@ final class TimeZones {
     }
 
     /**
-     * Maps an upper-cased zone name to its corresponding time offset in the manner of Ruby's Time.
+     * Converts an upper-case timezone string to {@link java.time.ZoneOffset}
+     * in the manner of Ruby's {@code Time}.
      *
-     * <p>Upper-cased names are expected here so that it can accept typical zonetab names straightforward,
-     * which are often upper-cased, for example, "GMT", "PST", and "JST".
+     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l97">ZoneOffset in Ruby</a>
      *
-     * <p>Its switch-case implementation is efficient enough. It is compiled into efficient bytecode that is
-     * usually based on {@code hashCode}. {@code HashMap} is not chosen because it needs boxing for integers.
+     * <p>An upper-cased timename string is expected here so that it can accept
+     * typical zonetab names as-is, which are often upper-cased such as "GMT",
+     * and "PST".
      *
-     * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/language/strings-switch.html">Strings in switch Statements</a>
-     * @see <a href="https://stackoverflow.com/questions/22110707/how-is-string-in-switch-statement-more-efficient-than-corresponding-if-else-stat">How is String in switch statement more efficient than corresponding if-else statement?</a>
+     * <p>Its switch-case implementation is efficient enough. It is compiled to
+     * efficient bytecode that is usually based on {@code hashCode}.
+     * {@code HashMap} is not chosen because it needs boxing for integers.
      *
-     * <p>The mapping is generated from {@code ZoneOffset} in {@code lib/time.rb} of Ruby 2.5.0.
-     *
-     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/lib/time.rb?view=markup#l97">ZoneOffset</a>
+     * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/language/strings-switch.html">Strings in switch Stateme
+nts</a>
+     * @see <a href="https://stackoverflow.com/questions/22110707/how-is-string-in-switch-statement-more-efficient-than-correspondi
+ng-if-else-stat">How is String in switch statement more efficient than corresponding if-else statement?</a>
      */
-    private static int mapZoneNametoOffsetInHours(final String name) {
-        switch (name) {
-        case "UTC": return 0;
-
-        // ISO 8601
-        case "Z":   return 0;
-
-        // RFC 822
-        case "UT":  return 0;
-        case "GMT": return 0;
-        case "EST": return -5;
-        case "EDT": return -4;
-        case "CST": return -6;
-        case "CDT": return -5;
-        case "MST": return -7;
-        case "MDT": return -6;
-        case "PST": return -8;
-        case "PDT": return -7;
-
-        // Following definition of military zones is original one.
-        // See RFC 1123 and RFC 2822 for the error in RFC 822.
-        case "A":   return +1;
-        case "B":   return +2;
-        case "C":   return +3;
-        case "D":   return +4;
-        case "E":   return +5;
-        case "F":   return +6;
-        case "G":   return +7;
-        case "H":   return +8;
-        case "I":   return +9;
-        case "K":   return +10;
-        case "L":   return +11;
-        case "M":   return +12;
-        case "N":   return -1;
-        case "O":   return -2;
-        case "P":   return -3;
-        case "Q":   return -4;
-        case "R":   return -5;
-        case "S":   return -6;
-        case "T":   return -7;
-        case "U":   return -8;
-        case "V":   return -9;
-        case "W":   return -10;
-        case "X":   return -11;
-        case "Y":   return -12;
-        }
-        return Integer.MIN_VALUE;
-    }
-
     private static ZoneOffset mapZoneNametoZoneOffset(final String name) {
         switch (name) {
         case "UTC": return ZoneOffset.UTC;

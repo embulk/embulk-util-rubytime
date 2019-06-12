@@ -43,7 +43,7 @@ module TimeMonkeyPatch
         end
         zone_string = parsed.query(Java::org.embulk.util.rubytime.RubyTemporalQueries.rubyTimeZone())
 
-        offset = Java::org.embulk.util.rubytime.TimeZones.toZoneOffset(
+        offset = Java::org.embulk.util.rubytime.RubyTimeZones.toZoneOffset(
           zone_string, Java::java.time.ZoneOffset::UTC).getTotalSeconds()
 
         # Workaround against difference in handling "UTC" between Matz' Ruby Implementation (MRI) and JRuby.
