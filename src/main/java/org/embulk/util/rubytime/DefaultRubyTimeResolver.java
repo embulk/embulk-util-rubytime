@@ -195,7 +195,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
     @Override
     public TemporalAccessor resolve(final TemporalAccessor original) {
         final String zone = original.query(RubyTemporalQueries.rubyTimeZone());
-        final ZoneOffset offset = TimeZones.toZoneOffset(zone, defaultOffset);
+        final ZoneOffset offset = RubyTimeZones.toZoneOffset(zone, defaultOffset);
 
         if (offset == null) {
             if (zone == null) {

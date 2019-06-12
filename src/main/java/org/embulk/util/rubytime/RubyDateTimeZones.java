@@ -17,14 +17,21 @@
 package org.embulk.util.rubytime;
 
 /**
- * Emulates parsing a zone in the manner of Ruby's Date and DateTime.
+ * This class contains a {@code static} method to interpret a timezone string
+ * in the manner of Ruby's {@code Date} and {@code DateTime} classes.
  *
- * <p>{@code Date}'s parsing is different from {@code Time}'s parsing. For example,
- * {@code Date} recognizes {@code "CEST"} while {@code Time} does not recognize.
- * Both recognizes {@code "PST"}, though.
+ * <p>Ruby's {@code Date} and {@code DateTime} classes accept a superset of
+ * timezone strings which are accepted by Ruby's {@code Time} class. Ruby's
+ * {@code Time.strptime} internally calls {@code Date._strptime} just to expand
+ * a date-time string into elements, and then resolves the expanded elements by
+ * {@code Time}'s own way. In other words, some timezone strings are recognized
+ * once by {@code Date._strptime} at first, and then by {@code Time.strptime}
+ * ignores them.
  *
- * <code>
- * $ env TZ=UTC irb
+ * <p>For example, {@code Date} recognizes {@code "CEST"} although {@code Time}
+ * does not recognize it. On the other hand, both recognizes {@code "PST"}.
+ *
+ * <pre>{@code $ env TZ=UTC irb
  * irb(main):001:0> require 'date'
  * => true
  * irb(main):002:0> require 'time'
@@ -32,41 +39,52 @@ package org.embulk.util.rubytime;
  *
  * irb(main):003:0> Date._strptime("CEST", "%z")
  * => {:zone=>"CEST", :offset=>7200}
+ *
  * irb(main):004:0> DateTime.strptime("2017-12-31 12:34:56 CEST", "%Y-%m-%d %H:%M:%S %z")
  * => #<DateTime: 2017-12-31T12:34:56+02:00 ((2458119j,38096s,0n),+7200s,2299161j)>
+ *
  * irb(main):005:0> Time.strptime("2017-12-31 12:34:56 CEST", "%Y-%m-%d %H:%M:%S %z")
  * => 2017-12-31 12:34:56 +0000
  *
  * irb(main):006:0> Date._strptime("PST", "%z")
  * => {:zone=>"PST", :offset=>-28800}
+ *
  * irb(main):007:0> DateTime.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
  * => #<DateTime: 2017-12-31T12:34:56-08:00 ((2458119j,74096s,0n),-28800s,2299161j)>
- * irb(main):008:0> Time.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
- * => 2017-12-31 12:34:56 -0800
- * </code>
  *
- * <p>Limitations compared from Ruby:
- * <ul>
- * <li>Offset with a fraction part (e.g. "UTC+10.5") is parsed into an integer rounded down, not a Rational.
- * <li>Offset with too long a fraction part (e.g. "UTC+10.111111111111") is not accepted. Exception is thrown instead.
- * </ul>
+ * irb(main):008:0> Time.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
+ * => 2017-12-31 12:34:56 -0800}</pre>
  */
-final class DateZones {
-    private DateZones() {
+public final class RubyDateTimeZones {
+    private RubyDateTimeZones() {
         // No instantiation.
     }
 
     /**
-     * Converts a zone to an offset in seconds.
+     * Converts a timezone string into a time offset integer in seconds.
      *
-     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/ext/date/date_parse.c?view=markup#l353">date_zone_to_diff</a>
+     * <p>Note that it has some limitations compared from Ruby's implementation.
+     * <ul>
+     * <li>Offset with a fraction part (e.g. {@code "UTC+10.5"}) is parsed into an
+     * integer rounded down in seconds, not into a {@code Rational}.
+     * <li>Offset with too long a fraction part (e.g. {@code "UTC+9.111111111111"})
+     * is rejected. It throws {@link java.lang.NumberFormatException} in that case.
+     * </ul>
+     *
+     * @param zoneName  a timezone string
+     *
+     * @return a time offset integer in seconds
+     *
+     * @throws java.lang.NumberFormatException  if failed to parse a numeric part
+     *
+     * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/ext/date/date_parse.c?view=markup#l353">date_zone_to_diff in Ruby</a>
      */
-    public static int toOffsetInSeconds(final String zone) {
-        if (zone == null) {
+    public static int toOffsetInSeconds(final String zoneName) {
+        if (zoneName == null) {
             return Integer.MIN_VALUE;
         }
 
-        final String normalizedZone = normalize(zone);
+        final String normalizedZone = normalize(zoneName);
         final int normalizedLength = normalizedZone.length();
 
         final String zoneMain;

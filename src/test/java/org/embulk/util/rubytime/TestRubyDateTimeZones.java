@@ -53,7 +53,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class TestDateZones {
+public class TestRubyDateTimeZones {
     @ParameterizedTest
     @MethodSource("provideToOffsetInSecondsParams")
     public void testToOffsetInSecondsWithCRuby(final String value) throws Exception {
@@ -92,13 +92,13 @@ public class TestDateZones {
     public void testParseOffsetTooLongFraction() {
         assertThrows(
                 NumberFormatException.class,
-                () -> { DateZones.parseOffsetForTesting("UTC+19.001953125"); });
+                () -> { RubyDateTimeZones.parseOffsetForTesting("UTC+19.001953125"); });
         assertThrows(
                 NumberFormatException.class,
-                () -> { DateZones.parseOffsetForTesting("UTC+19.0009765625"); });
+                () -> { RubyDateTimeZones.parseOffsetForTesting("UTC+19.0009765625"); });
         assertThrows(
                 NumberFormatException.class,
-                () -> { DateZones.parseOffsetForTesting("UTC+19.0000111111"); });
+                () -> { RubyDateTimeZones.parseOffsetForTesting("UTC+19.0000111111"); });
     }
 
     @Test
@@ -308,7 +308,7 @@ public class TestDateZones {
             return;
         }
 
-        assertEquals(expectedOffset, DateZones.mapZoneNameToOffsetInSecondsForTesting(name.toUpperCase()));
+        assertEquals(expectedOffset, RubyDateTimeZones.mapZoneNameToOffsetInSecondsForTesting(name.toUpperCase()));
     }
 
     @ParameterizedTest
@@ -325,7 +325,7 @@ public class TestDateZones {
             "*",
         })
     public void testUnmatchingZoneTab(final String name) {
-        assertEquals(Integer.MIN_VALUE, DateZones.mapZoneNameToOffsetInSecondsForTesting(name.toUpperCase()));
+        assertEquals(Integer.MIN_VALUE, RubyDateTimeZones.mapZoneNameToOffsetInSecondsForTesting(name.toUpperCase()));
     }
 
     private static void assertToOffsetInSecondsCRuby(final String value) throws Exception {
@@ -340,7 +340,7 @@ public class TestDateZones {
         final List<String> result = cruby.callOneLiner(oneLiner);
         assertTrue(result.size() == 2);
 
-        final int actual = DateZones.toOffsetInSeconds(value);
+        final int actual = RubyDateTimeZones.toOffsetInSeconds(value);
         if (result.get(0).equals("nil") || !result.get(1).equals("nil")) {
             assertEquals(Integer.MIN_VALUE, actual);
         } else {
@@ -367,7 +367,7 @@ public class TestDateZones {
         // https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/ext/date/date_strptime.c?view=markup#l571
         assertTrue(result.get(1).equals("nil"));
 
-        final int actual = DateZones.parseOffsetForTesting(value);
+        final int actual = RubyDateTimeZones.parseOffsetForTesting(value);
         if (result.get(0).equals("nil")) {
             assertEquals(Integer.MIN_VALUE, actual);
         } else {
@@ -379,7 +379,7 @@ public class TestDateZones {
         final String scriptlet = String.format("DateTime._strptime(\"%s\", \"%%z\")", value);
         final Object result = jruby.runScriptlet(scriptlet);
 
-        final int actual = DateZones.parseOffsetForTesting(value);
+        final int actual = RubyDateTimeZones.parseOffsetForTesting(value);
         if (result == null) {
             assertEquals(Integer.MIN_VALUE, actual);
         } else {
@@ -403,13 +403,13 @@ public class TestDateZones {
             final int oldIndex,
             final int value,
             final int newIndex) {
-        final long result = DateZones.parseUnsignedIntUntilNonDigitForTesting(string, oldIndex);
+        final long result = RubyDateTimeZones.parseUnsignedIntUntilNonDigitForTesting(string, oldIndex);
         assertEquals(value, (int) (result & 0xffffffffL));
         assertEquals(newIndex, (int) (result >> 32));
     }
 
     private static void assertNormalize(final String name, final String expected) {
-        assertEquals(expected, DateZones.normalizeForTesting(name));
+        assertEquals(expected, RubyDateTimeZones.normalizeForTesting(name));
     }
 
     @BeforeAll

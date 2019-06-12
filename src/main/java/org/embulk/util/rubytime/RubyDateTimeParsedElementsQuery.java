@@ -252,7 +252,7 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         private void putTimeZone() {
             final String zone = temporal.query(RubyTemporalQueries.rubyTimeZone());
             if (zone != null) {
-                final int offset = DateZones.toOffsetInSeconds(zone);
+                final int offset = RubyDateTimeZones.toOffsetInSeconds(zone);
                 if (offset != Integer.MIN_VALUE) {
                     this.built.put(this.mapKeyConverter.convertMapKey("offset"), offset);
                 }
