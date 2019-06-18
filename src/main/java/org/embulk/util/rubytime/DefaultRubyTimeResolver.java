@@ -205,12 +205,14 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             }
         }
 
-        if (original.isSupported(ChronoField.INSTANT_SECONDS)) {
-            final long instantSeconds = original.getLong(ChronoField.INSTANT_SECONDS);
+        if (original.isSupported(ChronoField.INSTANT_SECONDS) || original.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
             final Instant instant;
-            if (original.isSupported(RubyChronoFields.NANO_OF_INSTANT_SECONDS)) {
-                instant = Instant.ofEpochSecond(instantSeconds, original.get(RubyChronoFields.NANO_OF_INSTANT_SECONDS));
+            if (original.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
+                // INSTANT_MILLIS (%Q) is prioritized if exists.
+                final long instantMillis = original.getLong(RubyChronoFields.INSTANT_MILLIS);
+                instant = Instant.ofEpochMilli(instantMillis);
             } else {
+                final long instantSeconds = original.getLong(ChronoField.INSTANT_SECONDS);
                 instant = Instant.ofEpochSecond(instantSeconds);
             }
 
@@ -231,9 +233,26 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                 // irb(main):004:0> Time.at(Rational(1500000000789, 1000), 100123).nsec
                 // => 889123000
                 final int nanoOfSecond = original.get(ChronoField.NANO_OF_SECOND);
-                if (instantSeconds >= 0) {
+                if (!instant.isBefore(Instant.EPOCH)) {
                     return new ResolvedFromInstant(instant.plusNanos(nanoOfSecond));
                 } else {
+                    // NANO_OF_SECOND is a "literal" fraction part of a second, by definition.
+                    // It is because "%N" (NANO_OF_SECOND) is used for calendar date-time, not only for seconds since epoch.
+                    //
+                    // Date._strptime("2019-06-08 12:34:56.789", "%Y-%m-%d %H:%M:%S.%N")
+                    // => {:year=>2019, :mon=>6, :mday=>8, :hour=>12, :min=>34, :sec=>56, :sec_fraction=>(789/1000)}
+                    // Date._strptime("1960-06-08 12:34:56.789", "%Y-%m-%d %H:%M:%S.%N")
+                    // => {:year=>1960, :mon=>6, :mday=>8, :hour=>12, :min=>34, :sec=>56, :sec_fraction=>(789/1000)}
+                    //
+                    // Date._strptime( "123.789", "%s.%N")
+                    // => {:seconds=>123, :sec_fraction=>(789/1000)}
+                    // Date._strptime("-123.789", "%s.%N")
+                    // => {:seconds=>-123, :sec_fraction=>(789/1000)}
+                    //
+                    // Then, if second's integer part is negative, the fraction part must be considered as negative.
+                    // The Ruby interpreter does the same.
+                    //
+                    // See: https://git.ruby-lang.org/ruby.git/tree/lib/time.rb?id=v2_6_3#n449
                     return new ResolvedFromInstant(instant.minusNanos(nanoOfSecond));
                 }
             } else {
@@ -324,7 +343,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                         && parsedExcessDays.getMonths() == 0
                         && parsedExcessDays.getYears() == 0) {
                 offset -= 24 * 60 * 60;
-                hourOfDay = 0;
+                hourOfDay = 0;  // TODO: Better to be hourOfDay -= 24 ?
             } else if (!parsedExcessDays.isZero()) {
                 throw new DateTimeException("Hour is not in the range of 0-24.");
             }
@@ -358,8 +377,13 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             }
 
             if (offset != 0) {
-                dayOfMonth += offset;
                 final int days = monthDays(year, monthOfYear);
+                if (monthOfYear == 2 && days == 28 && dayOfMonth == 29) {
+                    // Check for a leap year before applying a leap second.
+                    // Without this, "2001-02-29T23:59:60" successfully goes to "2001-03-01T00:00:00" inappropriately.
+                    throw new DateTimeException("Invalid date 'February 29' as '" + year + "' is not a leap year");
+                }
+                dayOfMonth += offset;
                 if (days < dayOfMonth) {
                     monthOfYear += 1;
                     if (12 < monthOfYear) {

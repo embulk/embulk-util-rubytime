@@ -32,7 +32,8 @@ module DateMonkeyPatch
         end
 
         map = parsed.query(Java::org.embulk.util.rubytime.RubyDateTimeParsedElementsQuery.with(
-                             Java::org.embulk.util.rubytime.DecimalFractionToRationalConverter.new(JRuby.runtime),
+                             Java::org.embulk.util.rubytime.FractionalSecondToRationalConverter.new(JRuby.runtime),
+                             Java::org.embulk.util.rubytime.MillisecondToRationalConverter.new(JRuby.runtime),
                              Java::org.embulk.util.rubytime.MapKeyToSymbolConverter.new(JRuby.runtime)))
 
         return map.nil? ? nil : map.to_hash
