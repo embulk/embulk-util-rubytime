@@ -36,9 +36,9 @@ public class TestRubyDateTimeParsedElementsQuery {
         builder.setLeftover("foobar");
         final Parsed parsed = builder.build();
         final Map<String, Object> parsedElements =
-                parsed.query(RubyDateTimeParsedElementsQuery.withDecimalFractionInBigDecimal());
+                parsed.query(RubyDateTimeParsedElementsQuery.withBigDecimal());
 
-        assertEquals(BigDecimal.valueOf(123456).add(BigDecimal.valueOf(789000000, 9)),
+        assertEquals(BigDecimal.valueOf(123456).add(BigDecimal.valueOf(789, 3)),
                      parsedElements.get("seconds"));
         assertEquals(11, parsedElements.get("hour"));
         assertEquals(92, parsedElements.get("yday"));

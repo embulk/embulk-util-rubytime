@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Embulk project
+ * Copyright 2019 The Embulk project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ package org.embulk.util.rubytime;
 import org.jruby.Ruby;
 import org.jruby.RubyRational;
 
-public class DecimalFractionToRationalConverter implements RubyDateTimeParsedElementsQuery.DecimalFractionConverter {
-    public DecimalFractionToRationalConverter(final Ruby ruby) {
+public class MillisecondToRationalConverter implements RubyDateTimeParsedElementsQuery.MillisecondConverter {
+    public MillisecondToRationalConverter(final Ruby ruby) {
         this.ruby = ruby;
     }
 
     @Override
-    public Object convertDecimalFraction(final long integer, final int nano) {
-        return RubyRational.newRational(this.ruby, ((long) integer * 1_000_000_000L) + (long) nano, 1_000_000_000L);
+    public Object convertMillisecond(final long millisecond) {
+        return RubyRational.newRationalCanonicalize(this.ruby.getCurrentContext(), millisecond, 1000L);
     }
 
     private final Ruby ruby;

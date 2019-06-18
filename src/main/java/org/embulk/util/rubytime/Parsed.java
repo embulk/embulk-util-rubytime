@@ -55,7 +55,7 @@ final class Parsed implements TemporalAccessor {
             final int minuteOfHour,
             final int monthOfYear,
             final long secondsSinceEpoch,
-            final int nanoOfSecondsSinceEpoch,
+            final long millisecondsSinceEpoch,
             final int secondOfMinute,
             final int weekOfYearStartingWithSunday,
             final int weekOfYearStartingWithMonday,
@@ -99,8 +99,8 @@ final class Parsed implements TemporalAccessor {
         if (secondsSinceEpoch > Long.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.INSTANT_SECONDS, secondsSinceEpoch);
         }
-        if (nanoOfSecondsSinceEpoch > Integer.MIN_VALUE) {
-            this.rubyChronoFieldValues.put(RubyChronoFields.Field.NANO_OF_INSTANT_SECONDS, (long) nanoOfSecondsSinceEpoch);
+        if (millisecondsSinceEpoch > Long.MIN_VALUE) {
+            this.rubyChronoFieldValues.put(RubyChronoFields.Field.INSTANT_MILLIS, (long) millisecondsSinceEpoch);
         }
         if (secondOfMinute > Integer.MIN_VALUE) {
             this.chronoFieldValues.put(ChronoField.SECOND_OF_MINUTE, (long) secondOfMinute);
@@ -153,7 +153,7 @@ final class Parsed implements TemporalAccessor {
             this.monthOfYear = Integer.MIN_VALUE;
             this.ampmOfDay = Integer.MIN_VALUE;
             this.secondsSinceEpoch = Long.MIN_VALUE;
-            this.nanoOfSecondsSinceEpoch = Integer.MIN_VALUE;
+            this.millisecondsSinceEpoch = Long.MIN_VALUE;
             this.secondOfMinute = Integer.MIN_VALUE;
             this.weekOfYearStartingWithSunday = Integer.MIN_VALUE;
             this.weekOfYearStartingWithMonday = Integer.MIN_VALUE;
@@ -218,7 +218,7 @@ final class Parsed implements TemporalAccessor {
                     this.minuteOfHour,
                     this.monthOfYear,
                     this.secondsSinceEpoch,
-                    this.nanoOfSecondsSinceEpoch,
+                    this.millisecondsSinceEpoch,
                     (this.secondOfMinute == 60 ? 59 : this.secondOfMinute),
                     this.weekOfYearStartingWithSunday,
                     this.weekOfYearStartingWithMonday,
@@ -367,6 +367,25 @@ final class Parsed implements TemporalAccessor {
         /**
          * Sets fractional part of the second.
          *
+         * <p>Note that it is a "literal" fractional part of a second, regardless of the sign of the integer part:
+         * positive or negative, in case it is used with seconds since epoch.
+         *
+         * <p>It is because this is used for calendar date-time, not only seconds since epoch.
+         *
+         * <pre>{@code
+         * Date._strptime("2019-06-08 12:34:56.789", "%Y-%m-%d %H:%M:%S.%N")
+         * => {:year=>2019, :mon=>6, :mday=>8, :hour=>12, :min=>34, :sec=>56, :sec_fraction=>(789/1000)}
+         * Date._strptime("1960-06-08 12:34:56.789", "%Y-%m-%d %H:%M:%S.%N")
+         * => {:year=>1960, :mon=>6, :mday=>8, :hour=>12, :min=>34, :sec=>56, :sec_fraction=>(789/1000)}
+         * }</pre>
+         *
+         * <pre>{@code
+         * Date._strptime( "123.789", "%s.%N")
+         * => {:seconds=>123, :sec_fraction=>(789/1000)}
+         * Date._strptime("-123.789", "%s.%N")
+         * => {:seconds=>-123, :sec_fraction=>(789/1000)}
+         * }</pre>
+         *
          * <ul>
          * <li> Ruby Date._strptime hash key corresponding: sec_fraction
          * <li> Ruby strptime directive specifier related: %L, %N
@@ -423,6 +442,16 @@ final class Parsed implements TemporalAccessor {
         /**
          * Sets seconds since the epoch.
          *
+         * <p>Once this ({@code %s}) is specified, INSTANT_MILLIS is cleared. The later overrides the earlier.
+         *
+         * <pre>{@code irb(main):002:0> require 'date'
+         * => true
+         * irb(main):002:0> Date._strptime("123456789 12849124", "%Q %s")
+         * => {:seconds=>12849124}
+         * irb(main):003:0> Date._strptime("123456789 12849124", "%s %Q")
+         * => {:seconds=>(3212281/250)}
+         * }</pre>
+         *
          * <ul>
          * <li> Ruby Date._strptime hash key corresponding: seconds
          * <li> Ruby strptime directive specifier related: %s
@@ -431,7 +460,7 @@ final class Parsed implements TemporalAccessor {
          */
         Builder setSecondsSinceEpoch(final long secondsSinceEpoch) {
             this.secondsSinceEpoch = secondsSinceEpoch;
-            this.nanoOfSecondsSinceEpoch = 0;
+            this.millisecondsSinceEpoch = Long.MIN_VALUE;
             return this;
         }
 
@@ -441,17 +470,39 @@ final class Parsed implements TemporalAccessor {
          * <ul>
          * <li> Ruby Date._strptime hash key corresponding: seconds
          * <li> Ruby strptime directive specifier related: %Q
-         * <li> java.time.temporal: ChronoField.INSTANT_SECONDS, RubyChronoFields.MILLI_OF_INSTANT_SECONDS
+         * <li> java.time.temporal: ChronoField.INSTANT_SECONDS, RubyChronoFields.Field.INSTANT_MILLIS
          * </ul>
          */
         Builder setMillisecondsSinceEpoch(final long millisecondsSinceEpoch) {
-            if (millisecondsSinceEpoch >= 0) {
-                this.secondsSinceEpoch = millisecondsSinceEpoch / 1000L;
-                this.nanoOfSecondsSinceEpoch = ((int) (millisecondsSinceEpoch % 1000L)) * 1000_000;
-            } else {
-                this.secondsSinceEpoch = millisecondsSinceEpoch / 1000L - 1;
-                this.nanoOfSecondsSinceEpoch = ((int) (millisecondsSinceEpoch % 1000L) + 1000) * 1000_000;
-            }
+            // Division of a negative integer rounds toward 0 in Java.
+            //
+            //       1 / 1000 => 0
+            //       0 / 1000 => 0
+            //    (-1) / 1000 => 0
+            // ...
+            //  (-998) / 1000 => 0
+            //  (-999) / 1000 => 0
+            // (-1000) / 1000 => -1
+            // (-1001) / 1000 => -1
+            // (-1002) / 1000 => -1
+            //
+            // https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.17.2
+            //
+            // On the other hand, Math.floorDivrounds rounds toward the positive infinity.
+            //
+            // floorDiv(    1, 1000) => 0
+            // floorDiv(    0, 1000) => 0
+            // floorDiv(   -1, 1000) => -1
+            // ...
+            // floorDiv( -998, 1000) => -1
+            // floorDiv( -999, 1000) => -1
+            // floorDiv(-1000, 1000) => -1
+            // floorDiv(-1001, 1000) => -2
+            // floorDiv(-1002, 1000) => -2
+            //
+            // https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#floorDiv-long-long-
+            this.secondsSinceEpoch = Math.floorDiv(millisecondsSinceEpoch, 1000L);
+            this.millisecondsSinceEpoch = millisecondsSinceEpoch;
             return this;
         }
 
@@ -652,7 +703,7 @@ final class Parsed implements TemporalAccessor {
         private int monthOfYear;
         private int ampmOfDay;
         private long secondsSinceEpoch;
-        private int nanoOfSecondsSinceEpoch;
+        private long millisecondsSinceEpoch;
         private int secondOfMinute;
         private int weekOfYearStartingWithSunday;
         private int weekOfYearStartingWithMonday;

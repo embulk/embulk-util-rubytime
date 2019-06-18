@@ -40,21 +40,22 @@ import java.util.Map;
  */
 public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<Map<T, Object>> {
     /**
-     * A converter for a decimal fraction to be stored as the required type in the result {@link java.util.Map}.
+     * A converter for fractional second to be stored as the required type in the result {@link java.util.Map}.
      *
-     * <p>For example, the following implementation converts a decimal fraction into Ruby's {@code Rational} object in JRuby.
+     * <p>For example, the following implementation converts fractional second into Ruby's {@code Rational} object in JRuby.
      *
      * <pre>{@code
      * import org.jruby.Ruby;
      * import org.jruby.RubyRational;
      *
-     * public class DecimalFractionToRationalConverter implements RubyDateTimeParsedElementsQuery.DecimalFractionConverter {
-     *     public DecimalFractionToRationalConverter(final Ruby ruby) {
+     * public class FractionalSecondToRationalConverter implements RubyDateTimeParsedElementsQuery.FractionalSecondConverter {
+     *     public FractionalSecondToRationalConverter(final Ruby ruby) {
      *         this.ruby = ruby;
      *     }
      *
-     *     public Object convertDecimalFraction(final long integer, final int nano) {
-     *         return RubyRational.newRational(this.ruby, ((long) integer * 1_000_000_000L) + (long) nano, 1_000_000_000L);
+     *     public Object convertFractionalSecond(final long integer, final int nano) {
+     *         return RubyRational.newRationalCanonicalize(
+     *                        this.ruby.getCurrentContext(), ((long) integer * 1_000_000_000L) + (long) nano, 1_000_000_000L);
      *     }
      *
      *     private final Ruby ruby;
@@ -62,15 +63,48 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
      * }
      * </pre>
      */
-    public static interface DecimalFractionConverter {
+    public static interface FractionalSecondConverter {
         /**
-         * Converts a decimal fraction, a pair of an integer part and a fraction part, into an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link RubyDateTimeParsedElementsQuery}.
+         * Converts fractional second, a pair of an integer part and a fraction part, into an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link RubyDateTimeParsedElementsQuery}.
          *
          * @param integer  the integer part
          * @param nano  the fraction part in nano
          * @return an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map}, not null
          */
-        Object convertDecimalFraction(long integer, int nano);
+        Object convertFractionalSecond(long integer, int nano);
+    }
+
+    /**
+     * A converter for millisecond to be stored as the required type in the result {@link java.util.Map}.
+     *
+     * <p>For example, the following implementation converts millisecond into Ruby's {@code Rational} object in JRuby.
+     *
+     * <pre>{@code
+     * import org.jruby.Ruby;
+     * import org.jruby.RubyRational;
+     *
+     * public class MillisecondToRationalConverter implements RubyDateTimeParsedElementsQuery.MillisecondConverter {
+     *     public MillisecondToRationalConverter(final Ruby ruby) {
+     *         this.ruby = ruby;
+     *     }
+     *
+     *     public Object convertMillisecond(final long millisecond) {
+     *         return RubyRational.newRationalCanonicalize(this.ruby.getCurrentContext(), millisecond, 1000L);
+     *     }
+     *
+     *     private final Ruby ruby;
+     * }
+     * }
+     * </pre>
+     */
+    public static interface MillisecondConverter {
+        /**
+         * Converts millisecond in long into an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link RubyDateTimeParsedElementsQuery}.
+         *
+         * @param millisecond  millisecond
+         * @return an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map}, not null
+         */
+        Object convertMillisecond(long millisecond);
     }
 
     /**
@@ -109,9 +143,11 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
     }
 
     private RubyDateTimeParsedElementsQuery(
-            final DecimalFractionConverter decimalFractionConverter,
+            final FractionalSecondConverter fractionalSecondConverter,
+            final MillisecondConverter millisecondConverter,
             final MapKeyConverter<T> mapKeyConverter) {
-        this.decimalFractionConverter = decimalFractionConverter;
+        this.fractionalSecondConverter = fractionalSecondConverter;
+        this.millisecondConverter = millisecondConverter;
         this.mapKeyConverter = mapKeyConverter;
     }
 
@@ -120,32 +156,38 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
      *
      * @return the query, not null
      */
-    public static RubyDateTimeParsedElementsQuery<String> withDecimalFractionInBigDecimal() {
-        return new RubyDateTimeParsedElementsQuery<String>(FRACTION_TO_BIG_DECIMAL, STRING_AS_IS);
+    public static RubyDateTimeParsedElementsQuery<String> withBigDecimal() {
+        return new RubyDateTimeParsedElementsQuery<String>(
+                FRACTIONAL_SECOND_TO_BIG_DECIMAL, MILLISECOND_TO_BIG_DECIMAL, STRING_AS_IS);
     }
 
     /**
-     * Creates a query with seconds converted by the {@code decimalFractionConverter}.
+     * Creates a query with seconds converted by {@code fractionalSecondConverter} and {@code millisecondConverter}.
      *
-     * @param decimalFractionConverter  the converter to convert decimal fractions, not null
+     * @param fractionalSecondConverter  the converter to convert fractional second, not null
+     * @param millisecondConverter  the converter to convert millisecond, not null
      * @return the query, not null
      */
-    public static RubyDateTimeParsedElementsQuery<String> with(final DecimalFractionConverter decimalFractionConverter) {
-        return new RubyDateTimeParsedElementsQuery<String>(decimalFractionConverter, STRING_AS_IS);
+    public static RubyDateTimeParsedElementsQuery<String> with(
+            final FractionalSecondConverter fractionalSecondConverter,
+            final MillisecondConverter millisecondConverter) {
+        return new RubyDateTimeParsedElementsQuery<String>(fractionalSecondConverter, millisecondConverter, STRING_AS_IS);
     }
 
     /**
-     * Creates a query with seconds converted by the {@code decimalFractionConverter}, and map keys converted by the {@code mapKeyConverter}.
+     * Creates a query with seconds converted by {@code fractionalSecondConverter} and {@code millisecondConverter}, and map keys converted by the {@code mapKeyConverter}.
      *
      * @param <U>  the key type of the result {@link java.util.Map}
-     * @param decimalFractionConverter  the converter to convert decimal fractions, not null
+     * @param fractionalSecondConverter  the converter to convert fractional second, not null
+     * @param millisecondConverter  the converter to convert millisecond, not null
      * @param mapKeyConverter  the converter to convert map keys, not null
      * @return the query, not null
      */
     public static <U> RubyDateTimeParsedElementsQuery<U> with(
-            final DecimalFractionConverter decimalFractionConverter,
+            final FractionalSecondConverter fractionalSecondConverter,
+            final MillisecondConverter millisecondConverter,
             final MapKeyConverter<U> mapKeyConverter) {
-        return new RubyDateTimeParsedElementsQuery<U>(decimalFractionConverter, mapKeyConverter);
+        return new RubyDateTimeParsedElementsQuery<U>(fractionalSecondConverter, millisecondConverter, mapKeyConverter);
     }
 
     /**
@@ -156,7 +198,8 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
      */
     @Override
     public Map<T, Object> queryFrom(final TemporalAccessor temporal) {
-        final Builder<T> builder = new Builder<T>(temporal, this.decimalFractionConverter, this.mapKeyConverter);
+        final Builder<T> builder = new Builder<T>(
+                temporal, this.fractionalSecondConverter, this.millisecondConverter, this.mapKeyConverter);
 
         builder.put("mday", ChronoField.DAY_OF_MONTH);
         builder.put("cwyear", RubyChronoFields.WEEK_BASED_YEAR);
@@ -165,7 +208,7 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         builder.putSecFraction();
         builder.put("min", ChronoField.MINUTE_OF_HOUR);
         builder.put("mon", ChronoField.MONTH_OF_YEAR);
-        builder.putInstantSeconds();
+        builder.putSinceEpoch();
         builder.putSecondOfMinute();
         builder.put("wnum0", RubyChronoFields.WEEK_OF_YEAR_STARTING_WITH_SUNDAY);
         builder.put("wnum1", RubyChronoFields.WEEK_OF_YEAR_STARTING_WITH_MONDAY);
@@ -183,10 +226,12 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
     private static class Builder<T> {
         private Builder(
                 final TemporalAccessor temporal,
-                final DecimalFractionConverter decimalFractionConverterInner,
+                final FractionalSecondConverter fractionalSecondConverterInner,
+                final MillisecondConverter millisecondConverterInner,
                 final MapKeyConverter<T> mapKeyConverter) {
             this.temporal = temporal;
-            this.decimalFractionConverterInner = decimalFractionConverterInner;
+            this.fractionalSecondConverterInner = fractionalSecondConverterInner;
+            this.millisecondConverterInner = millisecondConverterInner;
             this.mapKeyConverter = mapKeyConverter;
             this.built = new HashMap<>();
         }
@@ -225,27 +270,24 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         private void putSecFraction() {
             if (this.temporal.isSupported(ChronoField.NANO_OF_SECOND)) {
                 this.built.put(this.mapKeyConverter.convertMapKey("sec_fraction"),
-                               this.decimalFractionConverterInner.convertDecimalFraction(
+                               this.fractionalSecondConverterInner.convertFractionalSecond(
                                        0, this.temporal.get(ChronoField.NANO_OF_SECOND)));
             }
         }
 
-        private void putInstantSeconds() {
-            if (this.temporal.isSupported(ChronoField.INSTANT_SECONDS)) {
+        private void putSinceEpoch() {
+            if (this.temporal.isSupported(RubyChronoFields.INSTANT_MILLIS)) {
+                // INSTANT_MILLIS (%Q) is prioritized over INSTANT_SECONDS (%s) "if exists".
+                //
+                // Once %Q is specified, both INSTANT_MILLIS and INSTANT_SECONDS are set.
+                // Once %s is specified, INSTANT_SECONDS is set, and INSTANT_MILLIS is cleared.
+                // The later overrides the earlier.
+                final long instantMillis = this.temporal.getLong(RubyChronoFields.INSTANT_MILLIS);
+                this.built.put(this.mapKeyConverter.convertMapKey("seconds"),
+                               this.millisecondConverterInner.convertMillisecond(instantMillis));
+            } else if (this.temporal.isSupported(ChronoField.INSTANT_SECONDS)) {
                 final long instantSeconds = this.temporal.getLong(ChronoField.INSTANT_SECONDS);
-                final int nanoOfInstantSeconds;
-                if (this.temporal.isSupported(ChronoField.INSTANT_SECONDS)) {
-                    nanoOfInstantSeconds = this.temporal.get(RubyChronoFields.NANO_OF_INSTANT_SECONDS);
-                } else {
-                    nanoOfInstantSeconds = 0;
-                }
-                if (nanoOfInstantSeconds == 0) {
-                    this.built.put(this.mapKeyConverter.convertMapKey("seconds"), instantSeconds);
-                } else {
-                    this.built.put(this.mapKeyConverter.convertMapKey("seconds"),
-                                   this.decimalFractionConverterInner.convertDecimalFraction(
-                                           instantSeconds, nanoOfInstantSeconds));
-                }
+                this.built.put(this.mapKeyConverter.convertMapKey("seconds"), instantSeconds);
             }
         }
 
@@ -272,18 +314,27 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
         }
 
         private final TemporalAccessor temporal;
-        private final DecimalFractionConverter decimalFractionConverterInner;
+        private final FractionalSecondConverter fractionalSecondConverterInner;
+        private final MillisecondConverter millisecondConverterInner;
         private final MapKeyConverter<T> mapKeyConverter;
         private final HashMap<T, Object> built;
     }
 
-    private static final DecimalFractionToBigDecimalConverter FRACTION_TO_BIG_DECIMAL;
+    private static final FractionalSecondToBigDecimalConverter FRACTIONAL_SECOND_TO_BIG_DECIMAL;
+    private static final MillisecondToBigDecimalConverter MILLISECOND_TO_BIG_DECIMAL;
     private static final StringAsIs STRING_AS_IS;
 
-    private final static class DecimalFractionToBigDecimalConverter implements DecimalFractionConverter {
+    private final static class FractionalSecondToBigDecimalConverter implements FractionalSecondConverter {
         @Override
-        public Object convertDecimalFraction(final long integer, final int nano) {
+        public Object convertFractionalSecond(final long integer, final int nano) {
             return BigDecimal.valueOf(integer).add(BigDecimal.valueOf(nano, 9));
+        }
+    }
+
+    private final static class MillisecondToBigDecimalConverter implements MillisecondConverter {
+        @Override
+        public Object convertMillisecond(final long millisecond) {
+            return BigDecimal.valueOf(millisecond, 3);
         }
     }
 
@@ -295,10 +346,12 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
     }
 
     static {
-        FRACTION_TO_BIG_DECIMAL = new DecimalFractionToBigDecimalConverter();
+        FRACTIONAL_SECOND_TO_BIG_DECIMAL = new FractionalSecondToBigDecimalConverter();
+        MILLISECOND_TO_BIG_DECIMAL = new MillisecondToBigDecimalConverter();
         STRING_AS_IS = new StringAsIs();
     }
 
-    private final DecimalFractionConverter decimalFractionConverter;
+    private final FractionalSecondConverter fractionalSecondConverter;
+    private final MillisecondConverter millisecondConverter;
     private final MapKeyConverter<T> mapKeyConverter;
 }
