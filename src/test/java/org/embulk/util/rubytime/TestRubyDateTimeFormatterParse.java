@@ -509,6 +509,19 @@ public class TestRubyDateTimeFormatterParse {
                          OffsetDateTime.of(2020, 1, 1, 4, 0, 0, 0, ZoneOffset.UTC).toInstant());
     }
 
+    @Test
+    public void testDefaultOffsets() {
+        final RubyDateTimeFormatter formatter = createOffsetFormatter("%Y-%m-%dT%H:%M:%S", ZoneOffset.ofHours(9));
+        assertEquals(Instant.from(formatter.parse("2000-03-01T05:00:00")),
+                     OffsetDateTime.of(2000, 2, 29, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(Instant.from(formatter.parse("2001-03-01T05:00:00")),
+                     OffsetDateTime.of(2001, 2, 28, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(Instant.from(formatter.parse("2004-03-01T05:00:00")),
+                     OffsetDateTime.of(2004, 2, 29, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(Instant.from(formatter.parse("2100-03-01T05:00:00")),
+                     OffsetDateTime.of(2100, 2, 28, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+    }
+
     private static TemporalAccessor strptime(final String string, final String format) {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern(format);
         return formatter.parseUnresolved(string);
@@ -532,5 +545,11 @@ public class TestRubyDateTimeFormatterParse {
             return;
         }
         fail();
+    }
+
+    private static RubyDateTimeFormatter createOffsetFormatter(final String format, final ZoneOffset offset) {
+        return RubyDateTimeFormatter
+                       .ofPattern(format)
+                       .withResolver(RubyDateTimeResolver.withDefaultZoneOffset(offset));
     }
 }

@@ -41,6 +41,16 @@ public abstract class RubyDateTimeResolver {
         return DefaultHolder.INSTANCE;
     }
 
+    /**
+     * Creates a resolver with default {@link java.time.ZoneOffset} configured.
+     *
+     * @param defaultZoneOffset  the default {@link java.time.ZoneOffset} if the parsed text does not contain a timezone
+     * @return the resolver created, not null
+     */
+    public static RubyDateTimeResolver withDefaultZoneOffset(final ZoneOffset defaultZoneOffset) {
+        return new DefaultRubyTimeResolver(false, defaultZoneOffset, 1970, 1, 1, 0, 0, 0, 0);
+    }
+
     private static class DefaultHolder {  // Initialization-on-demand holder
         static final RubyDateTimeResolver INSTANCE = new DefaultRubyTimeResolver(false, ZoneOffset.UTC, 1970, 1, 1, 0, 0, 0, 0);
     }
