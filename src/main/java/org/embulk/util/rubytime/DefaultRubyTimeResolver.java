@@ -381,7 +381,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                 if (monthOfYear == 2 && days == 28 && dayOfMonth == 29) {
                     // Check for a leap year before applying a leap second.
                     // Without this, "2001-02-29T23:59:60" successfully goes to "2001-03-01T00:00:00" inappropriately.
-                    throw new DateTimeException("Invalid date 'Fewbruary 29' as '" + year + "' is not a leap year");
+                    throw new DateTimeException("Invalid date 'February 29' as '" + year + "' is not a leap year");
                 }
                 dayOfMonth += offset;
                 if (days < dayOfMonth) {
