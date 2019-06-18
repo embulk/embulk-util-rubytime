@@ -352,28 +352,28 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
         if (offset < 0) {
             offset = -offset;
 
-            final int offsetSecond = offset % 60;
-            offset = offset / 60;
+            final int offsetSecond = Math.floorMod(offset, 60);
+            offset = Math.floorDiv(offset, 60);
             if (offsetSecond != 0) {
                 secondOfMinute += offsetSecond;
-                offset += secondOfMinute / 60;
-                secondOfMinute %= 60;
+                offset += Math.floorDiv(secondOfMinute, 60);
+                secondOfMinute = Math.floorMod(secondOfMinute, 60);
             }
 
-            final int offsetMinute = offset % 60;
-            offset = offset / 60;
+            final int offsetMinute = Math.floorMod(offset, 60);
+            offset = Math.floorDiv(offset, 60);
             if (offsetMinute != 0) {
                 minuteOfHour += offsetMinute;
-                offset += minuteOfHour / 60;
-                minuteOfHour %= 60;
+                offset += Math.floorDiv(minuteOfHour, 60);
+                minuteOfHour = Math.floorMod(minuteOfHour, 60);
             }
 
-            final int offsetHour = offset % 24;
-            offset = offset / 24;
+            final int offsetHour = Math.floorMod(offset, 24);
+            offset = Math.floorDiv(offset, 24);
             if (offsetHour != 0) {
                 hourOfDay += offsetHour;
-                offset += hourOfDay / 24;
-                hourOfDay %= 24;
+                offset += Math.floorDiv(hourOfDay, 24);
+                hourOfDay = Math.floorMod(hourOfDay, 24);
             }
 
             if (offset != 0) {
@@ -395,28 +395,28 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             }
 
         } else if (0 < offset) {
-            final int offsetSecond = offset % 60;
-            offset /= 60;
+            final int offsetSecond = Math.floorMod(offset, 60);
+            offset = Math.floorDiv(offset, 60);
             if (offsetSecond != 0) {
                 secondOfMinute -= offsetSecond;
-                offset -= secondOfMinute / 60;
-                secondOfMinute %= 60;
+                offset -= Math.floorDiv(secondOfMinute, 60);
+                secondOfMinute = Math.floorMod(secondOfMinute, 60);
             }
 
-            final int offsetMinute = offset % 60;
-            offset /= 60;
+            final int offsetMinute = Math.floorMod(offset, 60);
+            offset = Math.floorDiv(offset, 60);
             if (offsetMinute != 0) {
                 minuteOfHour -= offsetMinute;
-                offset -= minuteOfHour / 60;
-                minuteOfHour %= 60;
+                offset -= Math.floorDiv(minuteOfHour, 60);
+                minuteOfHour = Math.floorMod(minuteOfHour, 60);
             }
 
-            final int offsetHour = offset % 24;
-            offset /= 24;
+            final int offsetHour = Math.floorMod(offset, 24);
+            offset = Math.floorDiv(offset, 24);
             if (offsetHour != 0) {
                 hourOfDay -= offsetHour;
-                offset -= hourOfDay / 24;
-                hourOfDay %= 24;
+                offset -= Math.floorDiv(hourOfDay, 24);
+                hourOfDay = Math.floorMod(hourOfDay, 24);
             }
 
             if (offset != 0) {
