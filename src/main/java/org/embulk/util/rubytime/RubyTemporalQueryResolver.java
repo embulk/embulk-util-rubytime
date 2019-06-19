@@ -21,4 +21,6 @@ package org.embulk.util.rubytime;
  */
 public interface RubyTemporalQueryResolver {
     String getOriginalText();
+    String getZone();
+    String getLeftover();
 }

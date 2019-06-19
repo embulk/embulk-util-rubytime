@@ -758,11 +758,7 @@ final class Parsed implements TemporalAccessor, RubyTemporalQueryResolver {
             return (R) this.parsedExcessDays;
         } else if (query == DateTimeFormatter.parsedLeapSecond()) {
             return (R) ((Boolean) this.parsedLeapSecond);
-        } else if (query == RubyTemporalQueries.rubyTimeZone()) {
-            return (R) this.timeZoneName;
-        } else if (query == RubyTemporalQueries.leftover()) {
-            return (R) this.leftover;
-        } else if (query == RubyTemporalQueries.originalText()) {
+        } else if (RubyTemporalQueries.isSpecificQuery(query)) {
             return query.queryFrom(this);
         } else {
             return TemporalAccessor.super.query(query);
@@ -780,6 +776,16 @@ final class Parsed implements TemporalAccessor, RubyTemporalQueryResolver {
     @Override
     public String getOriginalText() {
         return this.originalString;
+    }
+
+    @Override
+    public String getZone() {
+        return this.timeZoneName;
+    }
+
+    @Override
+    public String getLeftover() {
+        return this.leftover;
     }
 
     private final String originalString;
