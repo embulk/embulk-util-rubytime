@@ -29,6 +29,15 @@ public final class RubyTemporalQueries {
     }
 
     /**
+     * A query for the original text parsed.
+     *
+     * @return a query that can obtain the original text parsed
+     */
+    public static TemporalQuery<String> originalText() {
+        return RubyTemporalQueries.ORIGINAL_TEXT;
+    }
+
+    /**
      * A query for the time zone name in the same manner with {@code Date._strptime}.
      *
      * @return a query that can obtain the time zone name in the same manner with {@code Date._strptime}
@@ -46,8 +55,20 @@ public final class RubyTemporalQueries {
         return RubyTemporalQueries.LEFTOVER;
     }
 
+    static final TemporalQuery<String> ORIGINAL_TEXT = new OriginalTextQuery();
     static final TemporalQuery<String> RUBY_TIME_ZONE =
             (temporal) -> temporal.query(RubyTemporalQueries.RUBY_TIME_ZONE);
     static final TemporalQuery<String> LEFTOVER =
             (temporal) -> temporal.query(RubyTemporalQueries.LEFTOVER);
+
+    private static class OriginalTextQuery implements TemporalQuery<String> {
+        @Override
+        public final String queryFrom(final TemporalAccessor temporal) {
+            if (temporal instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) temporal;
+                return resolver.getOriginalText();
+            }
+            return null;
+        }
+    }
 }
