@@ -462,6 +462,53 @@ public class TestRubyDateTimeFormatterParse {
         assertEquals(OffsetDateTime.of(2017, 7, 14, 02, 40, 00, 567111111, ZoneOffset.UTC), datetime);
     }
 
+    @Test
+    public void testOffsets() {
+        assertParsedTime("2019-05-03T00:00:00-00:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 3, 0, 0, 0, 0, ZoneOffset.UTC).toInstant());
+
+        // Just "-5" should not work.
+        assertParsedTime("2019-05-03T00:00:00-5", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 3, 0, 0, 0, 0, ZoneOffset.UTC).toInstant());
+
+        assertParsedTime("2019-05-03T00:15:24-01:23:45", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 3, 1, 39, 9, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2019-05-03T23:00:00-01:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 4, 0, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2019-05-03T01:00:00-07:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 3, 8, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2019-05-03T23:00:00-07:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 4, 6, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2019-05-03T01:14:19+07:49:12", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2019, 5, 2, 17, 25, 7, 0, ZoneOffset.UTC).toInstant());
+
+        // Go forward through the leap year day (Feb 28 or Feb 29).
+        assertParsedTime("2000-02-28T23:00:00-05", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2000, 2, 29, 4, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2001-02-28T23:00:00-05:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2001, 3, 1, 4, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2004-02-28T23:00:00-05:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2004, 2, 29, 4, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2100-02-28T23:00:00-05:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2100, 3, 1, 4, 0, 0, 0, ZoneOffset.UTC).toInstant());
+
+        // Go back through the leap year day (Feb 28 or Feb 29).
+        assertParsedTime("2000-03-01T05:00:00+09", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2000, 2, 29, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2001-03-01T05:00:00+09:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2001, 2, 28, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2004-03-01T05:00:00+09:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2004, 2, 29, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2100-03-01T05:00:00+09:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2100, 2, 28, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+
+        // Carry up to the year.
+        assertParsedTime("2019-01-01T05:00:00+09:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2018, 12, 31, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertParsedTime("2019-12-31T21:00:00-07:00", "%Y-%m-%dT%H:%M:%S%Z",
+                         OffsetDateTime.of(2020, 1, 1, 4, 0, 0, 0, ZoneOffset.UTC).toInstant());
+    }
+
     private static TemporalAccessor strptime(final String string, final String format) {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern(format);
         return formatter.parseUnresolved(string);
