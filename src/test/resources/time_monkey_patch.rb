@@ -32,7 +32,7 @@ module TimeMonkeyPatch
         nano = parsedResolved.get(Java::java.time.temporal.ChronoField::NANO_OF_SECOND)
 
         # TODO: Get the zone offset directly from the resolved object, not from the parsed object.
-        # Querying rubyTimeZone for the resolved object may fail as of now.
+        # Querying RubyTemporalQueries.zone() for the resolved object may fail as of now.
         begin
           parsed = formatter.parseUnresolved(date)
         rescue Java::org.embulk.util.rubytime.RubyDateTimeParseException
@@ -41,7 +41,7 @@ module TimeMonkeyPatch
         if parsed.nil?
           raise 'RubyDateTimeFormatter#parseUnresolved returned null unexpectedly.'
         end
-        zone_string = parsed.query(Java::org.embulk.util.rubytime.RubyTemporalQueries.rubyTimeZone())
+        zone_string = parsed.query(Java::org.embulk.util.rubytime.RubyTemporalQueries.zone())
 
         offset = Java::org.embulk.util.rubytime.RubyTimeZones.toZoneOffset(
           zone_string, Java::java.time.ZoneOffset::UTC).getTotalSeconds()

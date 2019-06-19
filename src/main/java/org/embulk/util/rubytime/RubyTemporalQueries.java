@@ -28,6 +28,10 @@ public final class RubyTemporalQueries {
         // No instantiation.
     }
 
+    public static boolean isSpecificQuery(final TemporalQuery<?> query) {
+        return (query == ORIGINAL_TEXT || query == ZONE || query == LEFTOVER);
+    }
+
     /**
      * A query for the original text parsed.
      *
@@ -42,8 +46,8 @@ public final class RubyTemporalQueries {
      *
      * @return a query that can obtain the time zone name in the same manner with {@code Date._strptime}
      */
-    public static TemporalQuery<String> rubyTimeZone() {
-        return RubyTemporalQueries.RUBY_TIME_ZONE;
+    public static TemporalQuery<String> zone() {
+        return RubyTemporalQueries.ZONE;
     }
 
     /**
@@ -56,10 +60,8 @@ public final class RubyTemporalQueries {
     }
 
     static final TemporalQuery<String> ORIGINAL_TEXT = new OriginalTextQuery();
-    static final TemporalQuery<String> RUBY_TIME_ZONE =
-            (temporal) -> temporal.query(RubyTemporalQueries.RUBY_TIME_ZONE);
-    static final TemporalQuery<String> LEFTOVER =
-            (temporal) -> temporal.query(RubyTemporalQueries.LEFTOVER);
+    static final TemporalQuery<String> ZONE = new ZoneQuery();
+    static final TemporalQuery<String> LEFTOVER = new LeftoverQuery();
 
     private static class OriginalTextQuery implements TemporalQuery<String> {
         @Override
@@ -67,6 +69,28 @@ public final class RubyTemporalQueries {
             if (temporal instanceof RubyTemporalQueryResolver) {
                 final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) temporal;
                 return resolver.getOriginalText();
+            }
+            return null;
+        }
+    }
+
+    private static class ZoneQuery implements TemporalQuery<String> {
+        @Override
+        public final String queryFrom(final TemporalAccessor temporal) {
+            if (temporal instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) temporal;
+                return resolver.getZone();
+            }
+            return null;
+        }
+    }
+
+    private static class LeftoverQuery implements TemporalQuery<String> {
+        @Override
+        public final String queryFrom(final TemporalAccessor temporal) {
+            if (temporal instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) temporal;
+                return resolver.getLeftover();
             }
             return null;
         }

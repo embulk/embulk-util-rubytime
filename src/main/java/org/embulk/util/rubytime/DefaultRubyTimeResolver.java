@@ -148,6 +148,24 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             return null;
         }
 
+        @Override
+        public String getZone() {
+            if (this.original instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) this.original;
+                return resolver.getZone();
+            }
+            return null;
+        }
+
+        @Override
+        public String getLeftover() {
+            if (this.original instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) this.original;
+                return resolver.getLeftover();
+            }
+            return null;
+        }
+
         private final TemporalAccessor original;
         private final OffsetDateTime resolvedDateTime;
     }
@@ -189,7 +207,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
 
         @Override
         public <R> R query(final TemporalQuery<R> query) {
-            if (query == RubyTemporalQueries.originalText()) {
+            if (RubyTemporalQueries.isSpecificQuery(query)) {
                 // Some special queries are prioritized.
                 final R resultOriginal = this.original.query(query);
                 if (resultOriginal != null) {
@@ -233,6 +251,24 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             return null;
         }
 
+        @Override
+        public String getZone() {
+            if (this.original instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) this.original;
+                return resolver.getZone();
+            }
+            return null;
+        }
+
+        @Override
+        public String getLeftover() {
+            if (this.original instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) this.original;
+                return resolver.getLeftover();
+            }
+            return null;
+        }
+
         private final TemporalAccessor original;
         private final Instant resolvedInstant;
         private final OffsetDateTime resolvedDateTime;
@@ -246,7 +282,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
      */
     @Override
     public TemporalAccessor resolve(final TemporalAccessor original) {
-        final String zone = original.query(RubyTemporalQueries.rubyTimeZone());
+        final String zone = original.query(RubyTemporalQueries.zone());
         final ZoneOffset offset = RubyTimeZones.toZoneOffset(zone, defaultOffset);
 
         if (offset == null) {
