@@ -98,7 +98,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
     }
 
     // TODO(dmikurube): Confirm whether prioritizing |original| over |resolved| is really correct.
-    private class ResolvedFromOffsetDateTime implements TemporalAccessor {
+    private class ResolvedFromOffsetDateTime implements TemporalAccessor, RubyTemporalQueryResolver {
         private ResolvedFromOffsetDateTime(
                 final TemporalAccessor original,
                 final OffsetDateTime resolvedDateTime) {
@@ -139,12 +139,22 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
             return this.resolvedDateTime.range(field);
         }
 
+        @Override
+        public String getOriginalText() {
+            if (this.original instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) this.original;
+                return resolver.getOriginalText();
+            }
+            return null;
+        }
+
         private final TemporalAccessor original;
         private final OffsetDateTime resolvedDateTime;
     }
 
-    private class ResolvedFromInstant implements TemporalAccessor {
-        private ResolvedFromInstant(final Instant resolvedInstant) {
+    private class ResolvedFromInstant implements TemporalAccessor, RubyTemporalQueryResolver {
+        private ResolvedFromInstant(final TemporalAccessor original, final Instant resolvedInstant) {
+            this.original = original;
             this.resolvedInstant = resolvedInstant;
             this.resolvedDateTime = OffsetDateTime.ofInstant(resolvedInstant, ZoneOffset.UTC);
         }
@@ -152,7 +162,13 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
         @Override
         public long getLong(final TemporalField field) {
             if (this.resolvedInstant.isSupported(field)) {
+                // Its own Instant is intentionally prioritized so that a query for Instant does not return
+                // not SECONDS_SINCE_EPOCH + NANO_OF_SECOND unintentionally.
+                // Its Instant may need to be MILLISECONDS_SINCE_EPOCH + NANO_OF_SECOND instead.
                 return this.resolvedInstant.getLong(field);
+            }
+            if (this.original.isSupported(field)) {
+                return this.original.getLong(field);
             }
             return this.resolvedDateTime.getLong(field);
         }
@@ -160,6 +176,12 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
         @Override
         public boolean isSupported(final TemporalField field) {
             if (this.resolvedInstant.isSupported(field)) {
+                // Its own Instant is intentionally prioritized so that a query for Instant does not return
+                // not SECONDS_SINCE_EPOCH + NANO_OF_SECOND unintentionally.
+                // Its Instant may need to be MILLISECONDS_SINCE_EPOCH + NANO_OF_SECOND instead.
+                return true;
+            }
+            if (this.original.isSupported(field)) {
                 return true;
             }
             return this.resolvedDateTime.isSupported(field);
@@ -167,9 +189,23 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
 
         @Override
         public <R> R query(final TemporalQuery<R> query) {
+            if (query == RubyTemporalQueries.originalText()) {
+                // Some special queries are prioritized.
+                final R resultOriginal = this.original.query(query);
+                if (resultOriginal != null) {
+                    return resultOriginal;
+                }
+            }
             final R resultFromResolvedInstant = this.resolvedInstant.query(query);
             if (resultFromResolvedInstant != null) {
+                // Its own Instant is intentionally prioritized so that a query for Instant does not return
+                // not SECONDS_SINCE_EPOCH + NANO_OF_SECOND unintentionally.
+                // Its Instant may need to be MILLISECONDS_SINCE_EPOCH + NANO_OF_SECOND instead.
                 return resultFromResolvedInstant;
+            }
+            final R resultOriginal = this.original.query(query);
+            if (resultOriginal != null) {
+                return resultOriginal;
             }
             return this.resolvedDateTime.query(query);
         }
@@ -177,11 +213,27 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
         @Override
         public ValueRange range(final TemporalField field) {
             if (this.resolvedInstant.isSupported(field)) {
+                // Its own Instant is intentionally prioritized so that a query for Instant does not return
+                // not SECONDS_SINCE_EPOCH + NANO_OF_SECOND unintentionally.
+                // Its Instant may need to be MILLISECONDS_SINCE_EPOCH + NANO_OF_SECOND instead.
                 return this.resolvedInstant.range(field);
+            }
+            if (this.original.isSupported(field)) {
+                return this.original.range(field);
             }
             return this.resolvedDateTime.range(field);
         }
 
+        @Override
+        public String getOriginalText() {
+            if (this.original instanceof RubyTemporalQueryResolver) {
+                final RubyTemporalQueryResolver resolver = (RubyTemporalQueryResolver) this.original;
+                return resolver.getOriginalText();
+            }
+            return null;
+        }
+
+        private final TemporalAccessor original;
         private final Instant resolvedInstant;
         private final OffsetDateTime resolvedDateTime;
     }
@@ -234,7 +286,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                 // => 889123000
                 final int nanoOfSecond = original.get(ChronoField.NANO_OF_SECOND);
                 if (!instant.isBefore(Instant.EPOCH)) {
-                    return new ResolvedFromInstant(instant.plusNanos(nanoOfSecond));
+                    return new ResolvedFromInstant(original, instant.plusNanos(nanoOfSecond));
                 } else {
                     // NANO_OF_SECOND is a "literal" fraction part of a second, by definition.
                     // It is because "%N" (NANO_OF_SECOND) is used for calendar date-time, not only for seconds since epoch.
@@ -253,10 +305,10 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                     // The Ruby interpreter does the same.
                     //
                     // See: https://git.ruby-lang.org/ruby.git/tree/lib/time.rb?id=v2_6_3#n449
-                    return new ResolvedFromInstant(instant.minusNanos(nanoOfSecond));
+                    return new ResolvedFromInstant(original, instant.minusNanos(nanoOfSecond));
                 }
             } else {
-                return new ResolvedFromInstant(instant);
+                return new ResolvedFromInstant(original, instant);
             }
             // TODO: Store the zone offset information in Resolved, instead of ZoneOffset.UTC.
             //

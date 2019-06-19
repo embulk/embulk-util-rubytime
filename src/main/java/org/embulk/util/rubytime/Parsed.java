@@ -43,7 +43,7 @@ import java.util.Map;
  *
  * @see <a href="http://ruby-doc.org/stdlib-2.5.0/libdoc/date/rdoc/Date.html#method-c-_strptime">Date._strptime</a>
  */
-final class Parsed implements TemporalAccessor {
+final class Parsed implements TemporalAccessor, RubyTemporalQueryResolver {
     private Parsed(
             final String originalString,
 
@@ -762,6 +762,8 @@ final class Parsed implements TemporalAccessor {
             return (R) this.timeZoneName;
         } else if (query == RubyTemporalQueries.leftover()) {
             return (R) this.leftover;
+        } else if (query == RubyTemporalQueries.originalText()) {
+            return query.queryFrom(this);
         } else {
             return TemporalAccessor.super.query(query);
         }
@@ -773,6 +775,11 @@ final class Parsed implements TemporalAccessor {
             return field.range();
         }
         return TemporalAccessor.super.range(field);
+    }
+
+    @Override
+    public String getOriginalText() {
+        return this.originalString;
     }
 
     private final String originalString;

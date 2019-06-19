@@ -473,6 +473,7 @@ public class TestRubyDateTimeFormatterParse {
 
         final Instant actualInstant = Instant.from(parsedResolved);
         assertEquals(expected, actualInstant);
+        assertEquals(string, parsedResolved.query(RubyTemporalQueries.originalText()));
     }
 
     private static void assertFailToParse(final String string, final String format) {
