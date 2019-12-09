@@ -46,23 +46,28 @@ module TimeMonkeyPatch
         offset = Java::org.embulk.util.rubytime.RubyTimeZones.toZoneOffset(
           zone_string, Java::java.time.ZoneOffset::UTC).getTotalSeconds()
 
-        # Workaround against difference in handling "UTC" between Matz' Ruby Implementation (MRI) and JRuby.
+        jruby_version = TimeMonkeyPatch::version_to_i(JRUBY_VERSION)
+        v9_2_0_0 = TimeMonkeyPatch::version_to_i("9.2.0.0")
+
+        # To make JRuby's `Time` instance to respond with `true` against `utc?`,
+        # it must be initialized with `org.joda.time.DateTimeZone.UTC`.
         #
-        # In MRI 2.5.0:
-        #   irb(main):002:0> mri_time = Time.new(2018, 1, 2, 3, 4, 5, 0)
-        #   => 2018-01-02 03:04:05 +0000
-        #   irb(main):003:0> mri_time.utc?
-        #   => false
+        # Ruby's `Time` instance should respond with `true` when and only when the zone
+        # matches with /\A(?:-00:00|-0000|-00|UTC|Z|UT)\z/i. See `zone_utc?` below.
         #
-        # In JRuby (as of 9.1.15.0):
-        #   irb(main):002:0> jruby_time = Time.new(2018, 1, 2, 3, 4, 5, 0)
-        #   => 2018-01-02 03:04:05 UTC
-        #   irb(main):003:0> jruby_time.utc?
-        #   => true
-        #
-        # Due to this difference, without this workaround, TestTimeExtension::test_strptime fails at:
-        #     assert_equal(false, Time.strptime('0', '%s').utc?)
-        if offset == 0 && zone_string != "UTC"
+        # Note that JRuby has been fixed to follow CRuby's behavior between 9.2.0.0 and 9.2.9.0.
+        # For example :
+        # https://github.com/jruby/jruby/pull/5402
+        # https://github.com/jruby/jruby/commit/71f7b5ae8f90b53eb72e4b0c6c928653fb6a2928
+        # https://github.com/jruby/jruby/pull/5589
+        # ...
+        if jruby_version > v9_2_0_0 && TimeMonkeyPatch::zone_utc?(zone_string)
+          ruby_time = Java::org.jruby.RubyTime.newTime(
+            JRuby.runtime,
+            Java::org.joda.time.DateTime.new((instant_seconds * 1000) + (nano / 1000000),
+                                             Java::org.joda.time.DateTimeZone::UTC),
+            nano % 1000000)
+        elsif jruby_version <= v9_2_0_0 && offset == 0 && zone_string != "UTC"
           ruby_time = Java::org.jruby.RubyTime.newTime(
             JRuby.runtime,
             Java::org.joda.time.DateTime.new((instant_seconds * 1000) + (nano / 1000000),
@@ -79,6 +84,43 @@ module TimeMonkeyPatch
         return ruby_time
       end
     end
+  end
+
+  # This method is imported from MRI for testing.
+  # https://github.com/ruby/ruby/blob/v2_6_5/lib/time.rb#L95-L117
+  def self.zone_utc?(zone)
+    # * +0000
+    #   In RFC 2822, +0000 indicate a time zone at Universal Time.
+    #   Europe/Lisbon is "a time zone at Universal Time" in Winter.
+    #   Atlantic/Reykjavik is "a time zone at Universal Time".
+    #   Africa/Dakar is "a time zone at Universal Time".
+    #   So +0000 is a local time such as Europe/London, etc.
+    # * GMT
+    #   GMT is used as a time zone abbreviation in Europe/London,
+    #   Africa/Dakar, etc.
+    #   So it is a local time.
+    #
+    # * -0000, -00:00
+    #   In RFC 2822, -0000 the date-time contains no information about the
+    #   local time zone.
+    #   In RFC 3339, -00:00 is used for the time in UTC is known,
+    #   but the offset to local time is unknown.
+    #   They are not appropriate for specific time zone such as
+    #   Europe/London because time zone neutral,
+    #   So -00:00 and -0000 are treated as UTC.
+    if zone.nil?
+      return false
+    else
+      zone.match?(/\A(?:-00:00|-0000|-00|UTC|Z|UT)\z/i)
+    end
+  end
+
+  def self.version_to_i(jruby_version)
+    split_version = jruby_version.split(".")
+    if split_version.length != 4
+      raise "Version #{jruby_version} is not 4-digits."
+    end
+    (split_version[0].to_i * 1_000_000_000) + (split_version[1].to_i * 1_000_000) + (split_version[2].to_i * 1_000) + split_version[3].to_i
   end
 end
 
