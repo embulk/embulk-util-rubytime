@@ -17,6 +17,18 @@ configurations {
     crubyTestRuntime {
         extendsFrom testRuntime
     }
+    jruby9_1_15TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_1_15TestRuntime {
+        extendsFrom testRuntime
+    }
+    jruby9_1_17TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_1_17TestRuntime {
+        extendsFrom testRuntime
+    }
     jruby9_2_0TestImplementation {
         extendsFrom testImplementation
     }
@@ -41,6 +53,8 @@ dependencies {
 
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.5.2"
 
+    jruby9_1_15TestImplementation "org.jruby:jruby-complete:9.1.15.0"
+    jruby9_1_17TestImplementation "org.jruby:jruby-complete:9.1.17.0"
     jruby9_2_0TestImplementation "org.jruby:jruby-complete:9.2.0.0"
     jruby9_2_9TestImplementation "org.jruby:jruby-complete:9.2.9.0"
 }
@@ -49,6 +63,28 @@ sourceSets {
     crubyTest {
         java {
             srcDir "src/crubyTest/java"
+        }
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
+
+    jruby9_1_15Test {
+        java {
+            srcDir "src/jrubyTest/java"
+        }
+        resources {
+            srcDir "src/jrubyTest/resources"
+        }
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
+
+    jruby9_1_17Test {
+        java {
+            srcDir "src/jrubyTest/java"
+        }
+        resources {
+            srcDir "src/jrubyTest/resources"
         }
         compileClasspath += main.output
         runtimeClasspath += main.output
@@ -103,6 +139,28 @@ test {
 task crubyTest(type: Test, description: "Runs tests with CRuby.", group: "Verification") {
     classpath = sourceSets.crubyTest.runtimeClasspath
     testClassesDirs = sourceSets.crubyTest.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+}
+
+task jruby9_1_15Test(type: Test, description: "Runs tests with JRuby 9.1.15.", group: "Verification") {
+    classpath = sourceSets.jruby9_1_15Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_1_15Test.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+}
+
+task jruby9_1_17Test(type: Test, description: "Runs tests with JRuby 9.1.17.", group: "Verification") {
+    classpath = sourceSets.jruby9_1_17Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_1_17Test.output.classesDirs
 
     useJUnitPlatform()
     testLogging {
