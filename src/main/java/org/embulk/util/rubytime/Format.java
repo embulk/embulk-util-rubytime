@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a Ruby-compatible date-time format.
@@ -44,6 +45,11 @@ final class Format implements Iterable<Format.TokenWithNext> {
         }
         final Format other = (Format) otherObject;
         return this.compiledPattern.equals(other.compiledPattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.compiledPattern);
     }
 
     @Override
@@ -88,7 +94,7 @@ final class Format implements Iterable<Format.TokenWithNext> {
                 switch (cur) {
                     case '%':
                         if (this.rawStringBuffer.length() > 0) {
-                            this.resultTokens.add(new FormatToken.Immediate(this.rawStringBuffer.toString()));
+                            this.resultTokens.add(FormatToken.immediate(this.rawStringBuffer.toString()));
                         }
                         this.rawStringBuffer = new StringBuilder();
                         this.index++;
@@ -102,7 +108,7 @@ final class Format implements Iterable<Format.TokenWithNext> {
                 }
             }
             if (this.rawStringBuffer.length() > 0) {
-                this.resultTokens.add(new FormatToken.Immediate(this.rawStringBuffer.toString()));
+                this.resultTokens.add(FormatToken.immediate(this.rawStringBuffer.toString()));
             }
 
             return Collections.unmodifiableList(this.resultTokens);
@@ -142,7 +148,7 @@ final class Format implements Iterable<Format.TokenWithNext> {
                     }
                     return false;
                 case '%':
-                    this.resultTokens.add(new FormatToken.Immediate("%"));
+                    this.resultTokens.add(FormatToken.immediate("%"));
                     this.index = beginningIndex + 1;
                     return true;
                 default:

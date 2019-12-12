@@ -16,75 +16,70 @@
 
 package org.embulk.util.rubytime;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * Represents a token instance in Ruby-compatible date-time format strings.
  */
-abstract class FormatToken {
-    abstract boolean isDirective();
-
-    static final class Directive extends FormatToken {
-        Directive(final FormatDirective formatDirective) {
-            this.formatDirective = formatDirective;
-        }
-
-        @Override
-        public boolean equals(final Object otherObject) {
-            if (!(otherObject instanceof Directive)) {
-                return false;
-            }
-            final Directive other = (Directive) otherObject;
-            return this.formatDirective.equals(other.formatDirective);
-        }
-
-        @Override
-        public String toString() {
-            return "<%" + this.formatDirective.toString() + ">";
-        }
-
-        @Override
-        boolean isDirective() {
-            return true;
-        }
-
-        FormatDirective getFormatDirective() {
-            return this.formatDirective;
-        }
-
-        private final FormatDirective formatDirective;
+final class FormatToken {
+    private FormatToken(final String immediate, final FormatDirective directive) {
+        this.immediate = immediate;
+        this.directive = directive;
     }
 
-    static final class Immediate extends FormatToken {
-        Immediate(final char character) {
-            this.string = "" + character;
-        }
+    static FormatToken directive(final FormatDirective directive) {
+        return new FormatToken(null, directive);
+    }
 
-        Immediate(final String string) {
-            this.string = string;
-        }
+    static FormatToken immediate(final char character) {
+        return new FormatToken("" + character, null);
+    }
 
-        @Override
-        public boolean equals(final Object otherObject) {
-            if (!(otherObject instanceof Immediate)) {
-                return false;
-            }
-            final Immediate other = (Immediate) otherObject;
-            return this.string.equals(other.string);
-        }
+    static FormatToken immediate(final String string) {
+        return new FormatToken(string, null);
+    }
 
-        @Override
-        public String toString() {
-            return "<\"" + this.string + "\">";
-        }
-
-        @Override
-        boolean isDirective() {
+    @Override
+    public boolean equals(final Object otherObject) {
+        if (!(otherObject instanceof FormatToken)) {
             return false;
         }
-
-        String getContent() {
-            return this.string;
-        }
-
-        private final String string;
+        final FormatToken other = (FormatToken) otherObject;
+        return Objects.equals(this.immediate, other.immediate)
+                && Objects.equals(this.directive, other.directive);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.immediate, this.directive);
+    }
+
+    @Override
+    public String toString() {
+        if (this.immediate == null) {
+            return "<%" + this.directive.toString() + ">";
+        } else {
+            return "<\"" + this.immediate + "\">";
+        }
+    }
+
+    boolean isImmediate() {
+        return this.immediate != null;
+    }
+
+    boolean isDirective() {
+        return this.directive != null;
+    }
+
+    Optional<FormatDirective> getFormatDirective() {
+        return Optional.ofNullable(this.directive);
+    }
+
+    Optional<String> getImmediate() {
+        return Optional.ofNullable(this.immediate);
+    }
+
+    private final String immediate;
+    private final FormatDirective directive;
 }

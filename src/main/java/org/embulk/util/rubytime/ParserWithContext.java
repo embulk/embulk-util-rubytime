@@ -46,10 +46,10 @@ final class ParserWithContext {
         for (final Format.TokenWithNext tokenWithNext : format) {
             final FormatToken token = tokenWithNext.getToken();
 
-            if (!token.isDirective()) {
-                this.consumeImmediateString(((FormatToken.Immediate) token).getContent());
+            if (token.isImmediate()) {
+                this.consumeImmediateString(token.getImmediate().get());
             } else {
-                switch (((FormatToken.Directive) token).getFormatDirective()) {
+                switch (token.getFormatDirective().get()) {
                     // %A - The full weekday name (``Sunday'')
                     // %a - The abbreviated name (``Sun'')
                     case DAY_OF_WEEK_FULL_NAME:
@@ -311,7 +311,7 @@ final class ParserWithContext {
 
         final long value;
         if (isNumberPattern(nextToken)) {
-            if (((FormatToken.Directive) thisToken).getFormatDirective() == FormatDirective.MILLI_OF_SECOND) {
+            if (thisToken.getFormatDirective().get() == FormatDirective.MILLI_OF_SECOND) {
                 value = this.consumeFractionalPartInInt(3, 9, "invalid fraction part of second");
             } else {
                 value = this.consumeFractionalPartInInt(9, 9, "invalid fraction part of second");
@@ -383,7 +383,7 @@ final class ParserWithContext {
     }
 
     private void consumeWeekOfYear(final Parsed.Builder builder, final FormatToken thisToken) {
-        if (((FormatToken.Directive) thisToken).getFormatDirective() == FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
+        if (thisToken.getFormatDirective().get() == FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
             builder.setWeekOfYearStartingWithSunday(this.consumeDigitsInInt(2, 0, 53, "invalid week of year"));
         } else {
             builder.setWeekOfYearStartingWithMonday(this.consumeDigitsInInt(2, 0, 53, "invalid week of year"));
@@ -556,9 +556,9 @@ final class ParserWithContext {
     private static boolean isNumberPattern(final FormatToken token) {
         if (token == null) {
             return false;
-        } else if ((!token.isDirective()) && isDigit(((FormatToken.Immediate) token).getContent().charAt(0))) {
+        } else if (token.isImmediate() && isDigit(token.getImmediate().get().charAt(0))) {
             return true;
-        } else if (token.isDirective() && ((FormatToken.Directive) token).getFormatDirective().isNumeric()) {
+        } else if (token.isDirective() && token.getFormatDirective().get().isNumeric()) {
             return true;
         } else {
             return false;

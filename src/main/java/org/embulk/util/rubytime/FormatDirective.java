@@ -164,7 +164,7 @@ enum FormatDirective {
             // Non-recurred directives first so that recurred directives can use tokens of non-recurred directives.
             if (!directive.isRecurred) {
                 final ArrayList<FormatToken> tokensBuilt = new ArrayList<>();
-                tokensBuilt.add(new FormatToken.Directive(directive));
+                tokensBuilt.add(FormatToken.directive(directive));
                 directiveTokensMapBuilt.put(directive, Collections.unmodifiableList(tokensBuilt));
             }
         }
@@ -175,7 +175,7 @@ enum FormatDirective {
                     final FormatDirective eachDirective =
                             charDirectiveMapBuilt.get(directive.recurred.charAt(i));
                     if (eachDirective == null) {
-                        tokensBuilt.add(new FormatToken.Immediate(directive.recurred.charAt(i)));
+                        tokensBuilt.add(FormatToken.immediate(directive.recurred.charAt(i)));
                     } else {
                         tokensBuilt.add(directiveTokensMapBuilt.get(eachDirective).get(0));
                     }
