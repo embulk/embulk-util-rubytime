@@ -17,6 +17,8 @@
 package org.embulk.util.rubytime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
@@ -34,156 +36,118 @@ public class TestFormat {
 
     @Test
     public void testSingles() {
-        testFormat("%Y", FormatDirective.YEAR_WITH_CENTURY.toTokens());
-        testFormat("%C", FormatDirective.CENTURY.toTokens());
-        testFormat("%y", FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+        testFormat("%Y", FormatDirective.YEAR_WITH_CENTURY);
+        testFormat("%C", FormatDirective.CENTURY);
+        testFormat("%y", FormatDirective.YEAR_WITHOUT_CENTURY);
 
-        testFormat("%m", FormatDirective.MONTH_OF_YEAR.toTokens());
-        testFormat("%B", FormatDirective.MONTH_OF_YEAR_FULL_NAME.toTokens());
-        testFormat("%b", FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME.toTokens());
-        testFormat("%h", FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME_ALIAS_SMALL_H.toTokens());
+        testFormat("%m", FormatDirective.MONTH_OF_YEAR);
+        testFormat("%B", FormatDirective.MONTH_OF_YEAR_FULL_NAME);
+        testFormat("%b", FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME);
+        testFormat("%h", FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME_ALIAS_SMALL_H);
 
-        testFormat("%d", FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens());
-        testFormat("%e", FormatDirective.DAY_OF_MONTH_BLANK_PADDED.toTokens());
+        testFormat("%d", FormatDirective.DAY_OF_MONTH_ZERO_PADDED);
+        testFormat("%e", FormatDirective.DAY_OF_MONTH_BLANK_PADDED);
 
-        testFormat("%j", FormatDirective.DAY_OF_YEAR.toTokens());
+        testFormat("%j", FormatDirective.DAY_OF_YEAR);
 
-        testFormat("%H", FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens());
-        testFormat("%k", FormatDirective.HOUR_OF_DAY_BLANK_PADDED.toTokens());
-        testFormat("%I", FormatDirective.HOUR_OF_AMPM_ZERO_PADDED.toTokens());
-        testFormat("%l", FormatDirective.HOUR_OF_AMPM_BLANK_PADDED.toTokens());
-        testFormat("%P", FormatDirective.AMPM_OF_DAY_LOWER_CASE.toTokens());
-        testFormat("%p", FormatDirective.AMPM_OF_DAY_UPPER_CASE.toTokens());
+        testFormat("%H", FormatDirective.HOUR_OF_DAY_ZERO_PADDED);
+        testFormat("%k", FormatDirective.HOUR_OF_DAY_BLANK_PADDED);
+        testFormat("%I", FormatDirective.HOUR_OF_AMPM_ZERO_PADDED);
+        testFormat("%l", FormatDirective.HOUR_OF_AMPM_BLANK_PADDED);
+        testFormat("%P", FormatDirective.AMPM_OF_DAY_LOWER_CASE);
+        testFormat("%p", FormatDirective.AMPM_OF_DAY_UPPER_CASE);
 
-        testFormat("%M", FormatDirective.MINUTE_OF_HOUR.toTokens());
+        testFormat("%M", FormatDirective.MINUTE_OF_HOUR);
 
-        testFormat("%S", FormatDirective.SECOND_OF_MINUTE.toTokens());
+        testFormat("%S", FormatDirective.SECOND_OF_MINUTE);
 
-        testFormat("%L", FormatDirective.MILLI_OF_SECOND.toTokens());
-        testFormat("%N", FormatDirective.NANO_OF_SECOND.toTokens());
+        testFormat("%L", FormatDirective.MILLI_OF_SECOND);
+        testFormat("%N", FormatDirective.NANO_OF_SECOND);
 
-        testFormat("%z", FormatDirective.TIME_OFFSET.toTokens());
-        testFormat("%Z", FormatDirective.TIME_ZONE_NAME.toTokens());
+        testFormat("%z", FormatDirective.TIME_OFFSET);
+        testFormat("%Z", FormatDirective.TIME_ZONE_NAME);
 
-        testFormat("%A", FormatDirective.DAY_OF_WEEK_FULL_NAME.toTokens());
-        testFormat("%a", FormatDirective.DAY_OF_WEEK_ABBREVIATED_NAME.toTokens());
-        testFormat("%u", FormatDirective.DAY_OF_WEEK_STARTING_WITH_MONDAY_1.toTokens());
-        testFormat("%w", FormatDirective.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0.toTokens());
+        testFormat("%A", FormatDirective.DAY_OF_WEEK_FULL_NAME);
+        testFormat("%a", FormatDirective.DAY_OF_WEEK_ABBREVIATED_NAME);
+        testFormat("%u", FormatDirective.DAY_OF_WEEK_STARTING_WITH_MONDAY_1);
+        testFormat("%w", FormatDirective.DAY_OF_WEEK_STARTING_WITH_SUNDAY_0);
 
-        testFormat("%G", FormatDirective.WEEK_BASED_YEAR_WITH_CENTURY.toTokens());
-        testFormat("%g", FormatDirective.WEEK_BASED_YEAR_WITHOUT_CENTURY.toTokens());
-        testFormat("%V", FormatDirective.WEEK_OF_WEEK_BASED_YEAR.toTokens());
+        testFormat("%G", FormatDirective.WEEK_BASED_YEAR_WITH_CENTURY);
+        testFormat("%g", FormatDirective.WEEK_BASED_YEAR_WITHOUT_CENTURY);
+        testFormat("%V", FormatDirective.WEEK_OF_WEEK_BASED_YEAR);
 
-        testFormat("%U", FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY.toTokens());
-        testFormat("%W", FormatDirective.WEEK_OF_YEAR_STARTING_WITH_MONDAY.toTokens());
+        testFormat("%U", FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY);
+        testFormat("%W", FormatDirective.WEEK_OF_YEAR_STARTING_WITH_MONDAY);
 
-        testFormat("%s", FormatDirective.SECONDS_SINCE_EPOCH.toTokens());
-        testFormat("%Q", FormatDirective.MILLISECONDS_SINCE_EPOCH.toTokens());
+        testFormat("%s", FormatDirective.SECONDS_SINCE_EPOCH);
+        testFormat("%Q", FormatDirective.MILLISECONDS_SINCE_EPOCH);
     }
 
     @Test
     public void testRecurred() {
         testFormat("%c",
-                   FormatDirective.DAY_OF_WEEK_ABBREVIATED_NAME.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.DAY_OF_MONTH_BLANK_PADDED.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens());
+                   FormatDirective.RECURRED_LOWER_C);
         testFormat("%D",
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
-                   FormatToken.immediate('/'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate('/'),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+                   FormatDirective.RECURRED_UPPER_D);
         testFormat("%x",
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
-                   FormatToken.immediate('/'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate('/'),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+                   FormatDirective.RECURRED_LOWER_X);
         testFormat("%F",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens());
+                   FormatDirective.RECURRED_UPPER_F);
         testFormat("%n",
-                   FormatToken.immediate('\n'));
+                   FormatDirective.IMMEDIATE_NEWLINE);
         testFormat("%R",
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens());
+                   FormatDirective.RECURRED_UPPER_R);
         testFormat("%r",
-                   FormatDirective.HOUR_OF_AMPM_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.AMPM_OF_DAY_UPPER_CASE.toTokens());
+                   FormatDirective.RECURRED_LOWER_R);
         testFormat("%T",
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.RECURRED_UPPER_T);
         testFormat("%X",
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.RECURRED_UPPER_X);
         testFormat("%t",
-                   FormatToken.immediate('\t'));
+                   FormatDirective.IMMEDIATE_TAB);
         testFormat("%v",
-                   FormatDirective.DAY_OF_MONTH_BLANK_PADDED.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens());
+                   FormatDirective.RECURRED_LOWER_V);
         testFormat("%+",
-                   FormatDirective.DAY_OF_WEEK_ABBREVIATED_NAME.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.DAY_OF_MONTH_BLANK_PADDED.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.TIME_ZONE_NAME.toTokens(),
-                   FormatToken.immediate(' '),
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens());
+                   FormatDirective.RECURRED_PLUS);
     }
 
     @Test
     public void testExtended() {
-        testFormat("%EC", FormatDirective.CENTURY.toTokens());
-        testFormat("%Oy", FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
-        testFormat("%:z", FormatDirective.TIME_OFFSET.toTokens());
-        testFormat("%::z", FormatDirective.TIME_OFFSET.toTokens());
-        testFormat("%:::z", FormatDirective.TIME_OFFSET.toTokens());
+        testFormat("%EC", FormatToken.directive("%EC", FormatDirective.CENTURY));
+        testFormat("%Oy", FormatToken.directive("%Oy", FormatDirective.YEAR_WITHOUT_CENTURY));
+        testFormat("%:z", FormatToken.directive(
+                "%:z", FormatDirective.TIME_OFFSET, FormatDirectiveOptions.builder().setColons(1).build()));
+        assertFalse(Format.compile("%:z").onlyForFormatter());
+        testFormat("%::z", FormatToken.directive(
+                "%::z", FormatDirective.TIME_OFFSET, FormatDirectiveOptions.builder().setColons(2).build()));
+        assertFalse(Format.compile("%::z").onlyForFormatter());
+        testFormat("%:::z", FormatToken.directive(
+                "%:::z", FormatDirective.TIME_OFFSET, FormatDirectiveOptions.builder().setColons(3).build()));
+        assertFalse(Format.compile("%:::z").onlyForFormatter());
+        testFormat("%::::z", FormatToken.directive(
+                "%::::z", FormatDirective.TIME_OFFSET, FormatDirectiveOptions.builder().setColons(4).build()));
+        assertTrue(Format.compile("%::::z").onlyForFormatter());
+
+        testFormat("%0d", FormatToken.directive(
+                "%0d", FormatDirective.DAY_OF_MONTH_ZERO_PADDED, FormatDirectiveOptions.builder().setPadding('0').build()));
+        assertTrue(Format.compile("%0d").onlyForFormatter());
+        testFormat("%12S", FormatToken.directive(
+                "%12S", FormatDirective.SECOND_OF_MINUTE, FormatDirectiveOptions.builder().setPrecision(12).build()));
+        assertTrue(Format.compile("%12S").onlyForFormatter());
+        testFormat("%09M", FormatToken.directive(
+                "%09M", FormatDirective.MINUTE_OF_HOUR,
+                FormatDirectiveOptions.builder().setPadding('0').setPrecision(9).build()));
+        assertTrue(Format.compile("%09M").onlyForFormatter());
     }
 
     @Test
     public void testPercents() {
         testFormat("%", FormatToken.immediate('%'));
-        testFormat("%%", FormatToken.immediate('%'));
+        testFormat("%%", FormatDirective.IMMEDIATE_PERCENT);
 
         // Split into two "%" tokens for some internal reasons.
-        testFormat("%%%", FormatToken.immediate('%'), FormatToken.immediate('%'));
-        testFormat("%%%%", FormatToken.immediate('%'), FormatToken.immediate('%'));
+        testFormat("%%%", FormatDirective.IMMEDIATE_PERCENT, FormatToken.immediate('%'));
+        testFormat("%%%%", FormatDirective.IMMEDIATE_PERCENT, FormatDirective.IMMEDIATE_PERCENT);
     }
 
     @Test
@@ -196,172 +160,151 @@ public class TestFormat {
         testFormat("%f", FormatToken.immediate("%f"));
         testFormat("%Ed", FormatToken.immediate("%Ed"));
         testFormat("%OY", FormatToken.immediate("%OY"));
-        testFormat("%::::z", FormatToken.immediate("%::::z"));
     }
 
     @Test
     public void testSpecifiersAndOrdinary() {
         testFormat("ab%Out%Expose",
                    FormatToken.immediate("ab"),
-                   FormatDirective.DAY_OF_WEEK_STARTING_WITH_MONDAY_1.toTokens(),
+                   FormatToken.directive("%Ou", FormatDirective.DAY_OF_WEEK_STARTING_WITH_MONDAY_1),
                    FormatToken.immediate("t"),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
-                   FormatToken.immediate('/'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate('/'),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens(),
+                   FormatToken.directive("%Ex", FormatDirective.RECURRED_LOWER_X),
                    FormatToken.immediate("pose"));
     }
 
     @Test
     public void testRubyTestPatterns() {
         testFormat("%Y-%m-%dT%H:%M:%S",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR,
                    FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED,
                    FormatToken.immediate('T'),
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
+                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED,
                    FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
+                   FormatDirective.MINUTE_OF_HOUR,
                    FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.SECOND_OF_MINUTE);
         testFormat("%d-%b-%y",
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED,
                    FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME,
                    FormatToken.immediate('-'),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+                   FormatDirective.YEAR_WITHOUT_CENTURY);
         testFormat("%A %B %d %y",
-                   FormatDirective.DAY_OF_WEEK_FULL_NAME.toTokens(),
+                   FormatDirective.DAY_OF_WEEK_FULL_NAME,
                    FormatToken.immediate(' '),
-                   FormatDirective.MONTH_OF_YEAR_FULL_NAME.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR_FULL_NAME,
                    FormatToken.immediate(' '),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED,
                    FormatToken.immediate(' '),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+                   FormatDirective.YEAR_WITHOUT_CENTURY);
         testFormat("%B %d, %y",
-                   FormatDirective.MONTH_OF_YEAR_FULL_NAME.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR_FULL_NAME,
                    FormatToken.immediate(' '),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED,
                    FormatToken.immediate(", "),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+                   FormatDirective.YEAR_WITHOUT_CENTURY);
         testFormat("%B%t%d,%n%y",
-                   FormatDirective.MONTH_OF_YEAR_FULL_NAME.toTokens(),
-                   FormatToken.immediate('\t'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR_FULL_NAME,
+                   FormatDirective.IMMEDIATE_TAB,
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED,
                    FormatToken.immediate(','),
-                   FormatToken.immediate('\n'),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens());
+                   FormatDirective.IMMEDIATE_NEWLINE,
+                   FormatDirective.YEAR_WITHOUT_CENTURY);
         testFormat("%I:%M:%S %p",
-                   FormatDirective.HOUR_OF_AMPM_ZERO_PADDED.toTokens(),
+                   FormatDirective.HOUR_OF_AMPM_ZERO_PADDED,
                    FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
+                   FormatDirective.MINUTE_OF_HOUR,
                    FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
+                   FormatDirective.SECOND_OF_MINUTE,
                    FormatToken.immediate(' '),
-                   FormatDirective.AMPM_OF_DAY_UPPER_CASE.toTokens());
+                   FormatDirective.AMPM_OF_DAY_UPPER_CASE);
         testFormat("%I:%M:%S %p %Z",
-                   FormatDirective.HOUR_OF_AMPM_ZERO_PADDED.toTokens(),
+                   FormatDirective.HOUR_OF_AMPM_ZERO_PADDED,
                    FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
+                   FormatDirective.MINUTE_OF_HOUR,
                    FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
+                   FormatDirective.SECOND_OF_MINUTE,
                    FormatToken.immediate(' '),
-                   FormatDirective.AMPM_OF_DAY_UPPER_CASE.toTokens(),
+                   FormatDirective.AMPM_OF_DAY_UPPER_CASE,
                    FormatToken.immediate(' '),
-                   FormatDirective.TIME_ZONE_NAME.toTokens());
+                   FormatDirective.TIME_ZONE_NAME);
         testFormat("%a%d%b%y%H%p%Z",
-                   FormatDirective.DAY_OF_WEEK_ABBREVIATED_NAME.toTokens(),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
-                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME.toTokens(),
-                   FormatDirective.YEAR_WITHOUT_CENTURY.toTokens(),
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatDirective.AMPM_OF_DAY_UPPER_CASE.toTokens(),
-                   FormatDirective.TIME_ZONE_NAME.toTokens());
+                   FormatDirective.DAY_OF_WEEK_ABBREVIATED_NAME,
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED,
+                   FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME,
+                   FormatDirective.YEAR_WITHOUT_CENTURY,
+                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED,
+                   FormatDirective.AMPM_OF_DAY_UPPER_CASE,
+                   FormatDirective.TIME_ZONE_NAME);
         testFormat("%Y9%m9%d",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate('9'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR,
                    FormatToken.immediate('9'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens());
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED);
         testFormat("%k%M%S",
-                   FormatDirective.HOUR_OF_DAY_BLANK_PADDED.toTokens(),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.HOUR_OF_DAY_BLANK_PADDED,
+                   FormatDirective.MINUTE_OF_HOUR,
+                   FormatDirective.SECOND_OF_MINUTE);
         testFormat("%l%M%S",
-                   FormatDirective.HOUR_OF_AMPM_BLANK_PADDED.toTokens(),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.HOUR_OF_AMPM_BLANK_PADDED,
+                   FormatDirective.MINUTE_OF_HOUR,
+                   FormatDirective.SECOND_OF_MINUTE);
         testFormat("%Y.",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate('.'));
         testFormat("%Y. ",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate(". "));
         testFormat("%Y-%m-%d",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR,
                    FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens());
+                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED);
         testFormat("%Y-%m-%e",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR,
                    FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_MONTH_BLANK_PADDED.toTokens());
+                   FormatDirective.DAY_OF_MONTH_BLANK_PADDED);
         testFormat("%Y-%j",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
+                   FormatDirective.YEAR_WITH_CENTURY,
                    FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_YEAR.toTokens());
+                   FormatDirective.DAY_OF_YEAR);
         testFormat("%H:%M:%S",
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
+                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED,
                    FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
+                   FormatDirective.MINUTE_OF_HOUR,
                    FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.SECOND_OF_MINUTE);
         testFormat("%k:%M:%S",
-                   FormatDirective.HOUR_OF_DAY_BLANK_PADDED.toTokens(),
+                   FormatDirective.HOUR_OF_DAY_BLANK_PADDED,
                    FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
+                   FormatDirective.MINUTE_OF_HOUR,
                    FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens());
+                   FormatDirective.SECOND_OF_MINUTE);
         testFormat("%A,",
-                   FormatDirective.DAY_OF_WEEK_FULL_NAME.toTokens(),
+                   FormatDirective.DAY_OF_WEEK_FULL_NAME,
                    FormatToken.immediate(','));
         testFormat("%B,",
-                   FormatDirective.MONTH_OF_YEAR_FULL_NAME.toTokens(),
+                   FormatDirective.MONTH_OF_YEAR_FULL_NAME,
                    FormatToken.immediate(','));
         testFormat("%FT%T%Z",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.RECURRED_UPPER_F,
                    FormatToken.immediate('T'),
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
-                   FormatDirective.TIME_ZONE_NAME.toTokens());
+                   FormatDirective.RECURRED_UPPER_T,
+                   FormatDirective.TIME_ZONE_NAME);
         testFormat("%FT%T.%N%Z",
-                   FormatDirective.YEAR_WITH_CENTURY.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.MONTH_OF_YEAR.toTokens(),
-                   FormatToken.immediate('-'),
-                   FormatDirective.DAY_OF_MONTH_ZERO_PADDED.toTokens(),
+                   FormatDirective.RECURRED_UPPER_F,
                    FormatToken.immediate('T'),
-                   FormatDirective.HOUR_OF_DAY_ZERO_PADDED.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.MINUTE_OF_HOUR.toTokens(),
-                   FormatToken.immediate(':'),
-                   FormatDirective.SECOND_OF_MINUTE.toTokens(),
+                   FormatDirective.RECURRED_UPPER_T,
                    FormatToken.immediate('.'),
-                   FormatDirective.NANO_OF_SECOND.toTokens(),
-                   FormatDirective.TIME_ZONE_NAME.toTokens());
+                   FormatDirective.NANO_OF_SECOND,
+                   FormatDirective.TIME_ZONE_NAME);
     }
 
     private void testFormat(final String formatString, final Object... expectedTokensInArray) {
@@ -369,14 +312,11 @@ public class TestFormat {
         for (final Object expectedElement : expectedTokensInArray) {
             if (expectedElement instanceof FormatToken) {
                 expectedTokens.add((FormatToken) expectedElement);
-            } else if (expectedElement instanceof List) {
-                for (final Object expectedElement2 : (List) expectedElement) {
-                    if (expectedElement2 instanceof FormatToken) {
-                        expectedTokens.add((FormatToken) expectedElement2);
-                    } else {
-                        fail("Not Token");
-                    }
-                }
+            } else if (expectedElement instanceof FormatDirective) {
+                expectedTokens.add(FormatToken.directive(
+                        "%" + ((FormatDirective) expectedElement).getSpecifier(),
+                        (FormatDirective) expectedElement,
+                        FormatDirectiveOptions.EMPTY));
             } else {
                 fail("Neither Token nor List");
             }
