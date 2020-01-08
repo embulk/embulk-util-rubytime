@@ -4,7 +4,7 @@ apply plugin: "signing"
 
 group = "org.embulk"
 archivesBaseName = "${project.name}"
-version = "0.2.0-SNAPSHOT"
+version = "0.3.0-SNAPSHOT"
 description "Almost Ruby-compatible date-time processor for Embulk and Embulk plugins"
 
 repositories {
