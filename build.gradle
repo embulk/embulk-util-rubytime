@@ -7,14 +7,25 @@ archivesBaseName = "${project.name}"
 version = "0.3.0-SNAPSHOT"
 description "Almost Ruby-compatible date-time processor for Embulk and Embulk plugins"
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-compileJava.options.encoding = "UTF-8"
-compileTestJava.options.encoding = "UTF-8"
+dependencies {
+    testImplementation "org.jruby:jruby-complete:9.2.0.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
+
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.5.2"
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    options.encoding = "UTF-8"
+}
 
 javadoc {
     title = "${project.name} v${project.version}"
@@ -24,18 +35,6 @@ javadoc {
         overview = "src/main/html/overview.html"
         links "https://docs.oracle.com/javase/8/docs/api/"
     }
-}
-
-dependencies {
-    testCompile "org.jruby:jruby-complete:9.2.0.0"
-    testCompile "org.junit.jupiter:junit-jupiter-api:5.3.1"
-    testCompile "org.junit.jupiter:junit-jupiter-params:5.3.1"
-
-    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.1"
-}
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
 test {
