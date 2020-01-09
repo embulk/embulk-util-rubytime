@@ -44,6 +44,9 @@ public class TestRubyDateTimeZonesWithJRuby {
     public void testParseOffsetWithJRuby(final String value) {
         // Offsets in OFFSETS_IGNORED_JRUBY are incompliant in JRuby.
         assumeTrue(!OFFSETS_IGNORED_JRUBY.contains(value));
+        if (JRUBY_VERSION < V9_2_0_0) {
+            assumeTrue(!OFFSETS_IGNORED_JRUBY_9_1.contains(value));
+        }
         assertParseOffsetJRuby(value);
     }
 
@@ -81,6 +84,20 @@ public class TestRubyDateTimeZonesWithJRuby {
     private static Stream<String> provideParseOffsetParams() {
         return Arrays.stream(OFFSETS);
     }
+
+    private static long encodeVersion(final String jrubyVersion) {
+        final String[] splitVersion = jrubyVersion.split("\\.");
+        if (splitVersion.length != 4) {
+            throw new RuntimeException("Version " + jrubyVersion + " is not 4-digits.");
+        }
+        return Long.parseLong(splitVersion[0]) * 1_000_000_000L
+                + Long.parseLong(splitVersion[1]) * 1_000_000L
+                + Long.parseLong(splitVersion[2]) * 1_000L
+                + Long.parseLong(splitVersion[3]);
+    }
+
+    private static long JRUBY_VERSION = encodeVersion(org.jruby.runtime.Constants.VERSION);
+    private static long V9_2_0_0 = encodeVersion("9.2.0.0");
 
     private static final String[] OFFSETS = {
         "DUMMY",
@@ -193,7 +210,20 @@ public class TestRubyDateTimeZonesWithJRuby {
         "UTC-19.000111111",
     };
 
+    // They don't work before JRuby 9.2.0.
+    private static final String[] OFFSETS_IGNORED_JRUBY_9_1_IN_ARRAY = {
+        "+19248",
+        "+9184812",
+        "-19248",
+        "-9184812",
+        "UTC+91294",
+        "UTC+9129424",
+        "UTC-91294",
+        "UTC-9129424",
+    };
+
     private static final Set<String> OFFSETS_IGNORED_JRUBY = new HashSet<>(Arrays.asList(OFFSETS_IGNORED_JRUBY_IN_ARRAY));
+    private static final Set<String> OFFSETS_IGNORED_JRUBY_9_1 = new HashSet<>(Arrays.asList(OFFSETS_IGNORED_JRUBY_9_1_IN_ARRAY));
 
     private static ScriptingContainer jruby;
     private static RubySymbol leftoverSymbol;
