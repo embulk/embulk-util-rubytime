@@ -14,4 +14,4 @@ jobs:
       with:
         ruby-version: 2.6.x
     - name: Build with testing
-      run: ./gradlew --stacktrace test crubyTest jrubyTest build
+      run: ./gradlew --stacktrace test crubyTest jruby9_2_0Test jruby9_2_9Test build

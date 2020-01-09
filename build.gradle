@@ -17,10 +17,16 @@ configurations {
     crubyTestRuntime {
         extendsFrom testRuntime
     }
-    jrubyTestImplementation {
+    jruby9_2_0TestImplementation {
         extendsFrom testImplementation
     }
-    jrubyTestRuntime {
+    jruby9_2_0TestRuntime {
+        extendsFrom testRuntime
+    }
+    jruby9_2_9TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_2_9TestRuntime {
         extendsFrom testRuntime
     }
 }
@@ -35,7 +41,8 @@ dependencies {
 
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.5.2"
 
-    jrubyTestImplementation "org.jruby:jruby-complete:9.2.0.0"
+    jruby9_2_0TestImplementation "org.jruby:jruby-complete:9.2.0.0"
+    jruby9_2_9TestImplementation "org.jruby:jruby-complete:9.2.9.0"
 }
 
 sourceSets {
@@ -47,7 +54,18 @@ sourceSets {
         runtimeClasspath += main.output
     }
 
-    jrubyTest {
+    jruby9_2_0Test {
+        java {
+            srcDir "src/jrubyTest/java"
+        }
+        resources {
+            srcDir "src/jrubyTest/resources"
+        }
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
+
+    jruby9_2_9Test {
         java {
             srcDir "src/jrubyTest/java"
         }
@@ -93,9 +111,20 @@ task crubyTest(type: Test, description: "Runs tests with CRuby.", group: "Verifi
     }
 }
 
-task jrubyTest(type: Test, description: "Runs tests with JRuby.", group: "Verification") {
-    classpath = sourceSets.jrubyTest.runtimeClasspath
-    testClassesDirs = sourceSets.jrubyTest.output.classesDirs
+task jruby9_2_0Test(type: Test, description: "Runs tests with JRuby 9.2.0.", group: "Verification") {
+    classpath = sourceSets.jruby9_2_0Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_2_0Test.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+}
+
+task jruby9_2_9Test(type: Test, description: "Runs tests with JRuby 9.2.9.", group: "Verification") {
+    classpath = sourceSets.jruby9_2_9Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_2_9Test.output.classesDirs
 
     useJUnitPlatform()
     testLogging {
