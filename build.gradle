@@ -10,16 +10,53 @@ description "Almost Ruby-compatible date-time processor for Embulk and Embulk pl
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+configurations {
+    crubyTestImplementation {
+        extendsFrom testImplementation
+    }
+    crubyTestRuntime {
+        extendsFrom testRuntime
+    }
+    jrubyTestImplementation {
+        extendsFrom testImplementation
+    }
+    jrubyTestRuntime {
+        extendsFrom testRuntime
+    }
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation "org.jruby:jruby-complete:9.2.0.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
 
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.5.2"
+
+    jrubyTestImplementation "org.jruby:jruby-complete:9.2.0.0"
+}
+
+sourceSets {
+    crubyTest {
+        java {
+            srcDir "src/crubyTest/java"
+        }
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
+
+    jrubyTest {
+        java {
+            srcDir "src/jrubyTest/java"
+        }
+        resources {
+            srcDir "src/jrubyTest/resources"
+        }
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
 }
 
 tasks.withType(JavaCompile) {
@@ -38,6 +75,28 @@ javadoc {
 }
 
 test {
+    useJUnitPlatform()
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+}
+
+task crubyTest(type: Test, description: "Runs tests with CRuby.", group: "Verification") {
+    classpath = sourceSets.crubyTest.runtimeClasspath
+    testClassesDirs = sourceSets.crubyTest.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+}
+
+task jrubyTest(type: Test, description: "Runs tests with JRuby.", group: "Verification") {
+    classpath = sourceSets.jrubyTest.runtimeClasspath
+    testClassesDirs = sourceSets.jrubyTest.output.classesDirs
+
     useJUnitPlatform()
     testLogging {
         outputs.upToDateWhen { false }
