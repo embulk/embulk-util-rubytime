@@ -228,7 +228,7 @@ final class ParserWithContext {
                         break;
 
                     // %D - "%m/%d/%y"
-                    // %X - "%m/%d/%y"
+                    // %x - "%m/%d/%y"
                     case RECURRED_UPPER_D:
                     case RECURRED_LOWER_X:
                         this.consumeMonthOfYear(builder);
