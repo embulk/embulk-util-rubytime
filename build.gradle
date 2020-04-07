@@ -1,5 +1,5 @@
 apply plugin: "java"
-apply plugin: "maven"
+apply plugin: "maven-publish"
 apply plugin: "signing"
 
 group = "org.embulk"
@@ -118,6 +118,11 @@ tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 javadoc {
     title = "${project.name} v${project.version}"
     options {
@@ -196,104 +201,75 @@ jar {
     from rootProject.file("NOTICE")
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = "sources"
-    from sourceSets.main.allSource
+sourcesJar {
     from rootProject.file("LICENSE")
     from rootProject.file("NOTICE")
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = "javadoc"
-    from javadoc.destinationDir
+javadocJar {
     from rootProject.file("LICENSE")
     from rootProject.file("NOTICE")
 }
 
-artifacts {
-    archives sourcesJar, javadocJar
-}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = "${project.group}"
+            artifactId = "${project.name}"
 
-tasks.withType(Sign) {
-    onlyIf { project.hasProperty("signing.keyId") && project.hasProperty("signing.password") }
-}
+            from components.java
+            // javadocJar and sourcesJar are added by java.withJavadocJar() and java.withSourcesJar() above.
+            // See: https://docs.gradle.org/current/javadoc/org/gradle/api/plugins/JavaPluginExtension.html
 
-signing {
-    sign configurations.archives
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            if (project.hasProperty("mavenCentral")) {
-                beforeDeployment {
-                    MavenDeployment deployment -> signing.signPom(deployment)
-                }
-
-                if (!(project.hasProperty("sonatype.userName") && project.hasProperty("sonatype.password"))) {
-                    throw new GradleException("Set sonatype.userName and sonatype.password to upload to Maven Central.")
-                }
-
-                // Do not assign SNAPSHOTs a unique version comprised of the timestamp and build number.
-                uniqueVersion = project.findProperty("mavenUniqueVersion") ?: false
-
-                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                    authentication(userName: project.getProperty("sonatype.userName"),
-                                   password: project.getProperty("sonatype.password"))
-                }
-                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                    authentication(userName: project.getProperty("sonatype.userName"),
-                                   password: project.getProperty("sonatype.password"))
-                }
-            } else {
-                if (project.hasProperty("signing.keyId") && project.hasProperty("signing.password")) {
-                    beforeDeployment {
-                        MavenDeployment deployment -> signing.signPom(deployment)
-                    }
-                } else {
-                    logger.warn('No OpenPGP key pair is configured.')
-                }
-
-                repository(url: "file:${project.buildDir}/mavenLocal")
-                snapshotRepository(url: "file:${project.buildDir}/mavenLocalSnapshot")
-            }
-
-            pom.project {
-                artifactId "${project.name}"
-                groupId "${project.group}"
-
+            pom {  // https://central.sonatype.org/pages/requirements.html
                 packaging "jar"
 
-                name "${project.name}"
-                description "${project.description}"
-                url "https://github.com/embulk/embulk-util-rubytime"
-
-                scm {
-                    url "https://github.com/embulk/embulk-util-rubytime"
-                    connection "scm:git:git://github.com/embulk/embulk-util-rubytime.git"
-                    developerConnection "scm:git:git@github.com:embulk/embulk-util-rubytime.git"
-                }
-
-                issueManagement {
-                    url "https://github.com/embulk/embulk-util-rubytime/issues"
-                }
+                name = "${project.name}"
+                description = "${project.description}"
+                url = "https://www.embulk.org/"
 
                 licenses {
                     license {
                         // http://central.sonatype.org/pages/requirements.html#license-information
-                        name "The Apache License, Version 2.0"
-                        url "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                        name = "The Apache License, Version 2.0"
+                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
                     }
                 }
 
                 developers {
                     developer {
-                        id "dmikurube"
-                        name "Dai MIKURUBE"
-                        email "dmikurube@treasure-data.com"
+                        id = "dmikurube"
+                        name = "Dai MIKURUBE"
+                        email = "dmikurube@treasure-data.com"
                     }
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/embulk/embulk-util-rubytime.git"
+                    developerConnection = "scm:git:git@github.com:embulk/embulk-util-rubytime.git"
+                    url = "https://github.com/embulk/embulk-util-rubytime"
                 }
             }
         }
     }
+
+    repositories {
+        maven {  // publishMavenPublicationToMavenCentralRepository
+            name = "mavenCentral"
+            if (project.version.endsWith("-SNAPSHOT")) {
+                url "https://oss.sonatype.org/content/repositories/snapshots"
+            } else {
+                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            }
+
+            credentials {
+                username = project.hasProperty("sonatype_username") ? sonatype_username : ""
+                password = project.hasProperty("sonatype_password") ? sonatype_password : ""
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.maven
 }
