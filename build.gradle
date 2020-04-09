@@ -263,8 +263,8 @@ publishing {
             }
 
             credentials {
-                username = project.hasProperty("sonatype_username") ? sonatype_username : ""
-                password = project.hasProperty("sonatype_password") ? sonatype_password : ""
+                username = project.hasProperty("ossrhUsername") ? ossrhUsername : ""
+                password = project.hasProperty("ossrhPassword") ? ossrhPassword : ""
             }
         }
     }
