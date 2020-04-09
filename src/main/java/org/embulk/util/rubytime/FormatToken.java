@@ -118,6 +118,10 @@ final class FormatToken {
         return Optional.ofNullable(this.immediate);
     }
 
+    Optional<FormatDirectiveOptions> getDirectiveOptions() {
+        return Optional.ofNullable(this.options);
+    }
+
     private final String immediate;
     private final FormatDirective directive;
     private final FormatDirectiveOptions options;

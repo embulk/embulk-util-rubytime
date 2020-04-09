@@ -43,6 +43,19 @@ public final class RubyDateTimeFormatter {
     }
 
     /**
+     * Formats a date-time object using this formatter.
+     *
+     * @param temporal  the temporal object to format, not null
+     *
+     * @return the formatted string, not null
+     *
+     * @throws RubyDateTimeParseException  if the parse results in an error
+     */
+    public String format(final TemporalAccessor temporal) {
+        return (new FormatterWithContext(temporal)).format(this.format);
+    }
+
+    /**
      * Parses the text using this formatter, without resolving the result, intended for advanced use cases.
      *
      * @param text  the text to parse, not null
