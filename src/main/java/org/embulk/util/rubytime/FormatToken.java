@@ -16,75 +16,109 @@
 
 package org.embulk.util.rubytime;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
- * Represents a token instance in Ruby-compatible date-time format strings.
+ * Represents a token, a part of a Ruby-compatible date-time format string.
+ *
+ * <p>A token can be an immediate string (e.g. "foo", "T", or else), or a directive.
+ * A directive is a special string piece, starting with {@code '%'}, to be used for
+ * parsing and formatting.
+ *
+ * <p>Even in a directive, it keeps its "immediate string" in it. For example for
+ * {@code "%-000124s"}, it means seconds since epoch, in 124-digit precision,
+ * without padding for a numerical output, but zero-padded (, zero-padded, zero-padded).
+ * So, it means just the same with {@code "%s"}, but the immediate string keeps
+ * the original string {@code "%-000124s"}.
  */
-abstract class FormatToken {
-    abstract boolean isDirective();
-
-    static final class Directive extends FormatToken {
-        Directive(final FormatDirective formatDirective) {
-            this.formatDirective = formatDirective;
-        }
-
-        @Override
-        public boolean equals(final Object otherObject) {
-            if (!(otherObject instanceof Directive)) {
-                return false;
-            }
-            final Directive other = (Directive) otherObject;
-            return this.formatDirective.equals(other.formatDirective);
-        }
-
-        @Override
-        public String toString() {
-            return "<%" + this.formatDirective.toString() + ">";
-        }
-
-        @Override
-        boolean isDirective() {
-            return true;
-        }
-
-        FormatDirective getFormatDirective() {
-            return this.formatDirective;
-        }
-
-        private final FormatDirective formatDirective;
+final class FormatToken {
+    private FormatToken(final String immediate, final FormatDirective directive, final FormatDirectiveOptions options) {
+        this.immediate = immediate;
+        this.directive = directive;
+        this.options = options;
     }
 
-    static final class Immediate extends FormatToken {
-        Immediate(final char character) {
-            this.string = "" + character;
-        }
+    static FormatToken directive(
+            final String immediate,
+            final FormatDirective directive,
+            final FormatDirectiveOptions options) {
+        return new FormatToken(immediate, directive, options);
+    }
 
-        Immediate(final String string) {
-            this.string = string;
-        }
+    static FormatToken directive(final String immediate, final FormatDirective directive) {
+        return new FormatToken(immediate, directive, FormatDirectiveOptions.EMPTY);
+    }
 
-        @Override
-        public boolean equals(final Object otherObject) {
-            if (!(otherObject instanceof Immediate)) {
-                return false;
-            }
-            final Immediate other = (Immediate) otherObject;
-            return this.string.equals(other.string);
-        }
+    static FormatToken immediate(final char character) {
+        return new FormatToken("" + character, null, null);
+    }
 
-        @Override
-        public String toString() {
-            return "<\"" + this.string + "\">";
-        }
+    static FormatToken immediate(final String string) {
+        return new FormatToken(string, null, null);
+    }
 
-        @Override
-        boolean isDirective() {
+    @Override
+    public boolean equals(final Object otherObject) {
+        if (!(otherObject instanceof FormatToken)) {
             return false;
         }
-
-        String getContent() {
-            return this.string;
-        }
-
-        private final String string;
+        final FormatToken other = (FormatToken) otherObject;
+        return Objects.equals(this.immediate, other.immediate)
+                && Objects.equals(this.directive, other.directive)
+                && Objects.equals(this.options, other.options);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.immediate, this.directive, this.options);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder builder = new StringBuilder();
+        if (this.directive != null) {
+            builder.append("%");
+            if (this.options != null) {
+                builder.append(this.options.toString());
+            }
+            builder.append(this.directive.toString());
+            if (this.immediate != null) {
+                builder.append("[\"").append(this.immediate).append("\"]");
+            }
+        } else {
+            builder.append("\"").append(this.immediate).append("\"");
+        }
+        return builder.toString();
+    }
+
+    boolean isImmediate() {
+        return this.directive == null;
+    }
+
+    boolean isDirective() {
+        return this.directive != null;
+    }
+
+    boolean onlyForFormatter() {
+        if (this.isImmediate()) {
+            return false;
+        }
+        if (this.options.onlyForFormatter()) {
+            return true;
+        }
+        return false;
+    }
+
+    Optional<FormatDirective> getFormatDirective() {
+        return Optional.ofNullable(this.directive);
+    }
+
+    Optional<String> getImmediate() {
+        return Optional.ofNullable(this.immediate);
+    }
+
+    private final String immediate;
+    private final FormatDirective directive;
+    private final FormatDirectiveOptions options;
 }

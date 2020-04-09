@@ -46,10 +46,17 @@ final class ParserWithContext {
         for (final Format.TokenWithNext tokenWithNext : format) {
             final FormatToken token = tokenWithNext.getToken();
 
-            if (!token.isDirective()) {
-                this.consumeImmediateString(((FormatToken.Immediate) token).getContent());
+            if (token.onlyForFormatter()) {
+                throw new RubyDateTimeParseException(
+                        "Text '" + this.text + "' could not be parsed at index " + this.pos,
+                        this.text,
+                        this.pos);
+            }
+
+            if (token.isImmediate()) {
+                this.consumeImmediateString(token.getImmediate().get());
             } else {
-                switch (((FormatToken.Directive) token).getFormatDirective()) {
+                switch (token.getFormatDirective().get()) {
                     // %A - The full weekday name (``Sunday'')
                     // %a - The abbreviated name (``Sun'')
                     case DAY_OF_WEEK_FULL_NAME:
@@ -170,7 +177,7 @@ final class ParserWithContext {
                     // %Y, %EY - Year with century (can be negative, 4 digits at least)
                     //           -0001, 0000, 1995, 2009, 14292, etc.
                     case YEAR_WITH_CENTURY:
-                        this.consumeYearWithCentury(builder, tokenWithNext.getNextToken());
+                        this.consumeYearWithCentury(builder, isNumberPattern(tokenWithNext.getNextToken()));
                         break;
 
                     // %y, %Ey, %Oy - year % 100 (00..99)
@@ -186,6 +193,115 @@ final class ParserWithContext {
                     case TIME_ZONE_NAME:
                     case TIME_OFFSET:
                         this.consumeTimeZone(builder);
+                        break;
+
+                    // %% - '%'
+                    case IMMEDIATE_PERCENT:
+                        this.consumeImmediateString("%");
+                        break;
+
+                    // %n - '\n'
+                    case IMMEDIATE_NEWLINE:
+                        this.consumeImmediateString("\n");
+                        break;
+
+                    // %t - '\t'
+                    case IMMEDIATE_TAB:
+                        this.consumeImmediateString("\t");
+                        break;
+
+                    // %c - "%a %b %e %H:%M:%S %Y"
+                    case RECURRED_LOWER_C:
+                        this.consumeWeekName(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeMonthOfYearName(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeDayOfMonth(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeHourOfDay(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeMinuteOfHour(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeSecondOfMinute(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeYearWithCentury(builder, isNumberPattern(tokenWithNext.getNextToken()));  // Last
+                        break;
+
+                    // %D - "%m/%d/%y"
+                    // %x - "%m/%d/%y"
+                    case RECURRED_UPPER_D:
+                    case RECURRED_LOWER_X:
+                        this.consumeMonthOfYear(builder);
+                        this.consumeImmediateString("/");
+                        this.consumeDayOfMonth(builder);
+                        this.consumeImmediateString("/");
+                        this.consumeYearWithoutCentury(builder);
+                        break;
+
+                    // %F - "%Y-%m-%d"
+                    case RECURRED_UPPER_F:
+                        this.consumeYearWithCentury(builder, false);  // Not last
+                        this.consumeImmediateString("-");
+                        this.consumeMonthOfYear(builder);
+                        this.consumeImmediateString("-");
+                        this.consumeDayOfMonth(builder);
+                        break;
+
+                    // %R - "%H:%M"
+                    case RECURRED_UPPER_R:
+                        this.consumeHourOfDay(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeMinuteOfHour(builder);
+                        break;
+
+                    // %r - "%I:%M:%S %p"
+                    case RECURRED_LOWER_R:
+                        this.consumeHourOfAmPm(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeMinuteOfHour(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeSecondOfMinute(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeAmPmOfDay(builder);
+                        break;
+
+                    // %T - "%H:%M:%S"
+                    // %X - "%H:%M:%S"
+                    case RECURRED_UPPER_T:
+                    case RECURRED_UPPER_X:
+                        this.consumeHourOfDay(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeMinuteOfHour(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeSecondOfMinute(builder);
+                        break;
+
+                    // %V - "%e-%b-%Y"
+                    case RECURRED_LOWER_V:
+                        this.consumeDayOfMonth(builder);
+                        this.consumeImmediateString("-");
+                        this.consumeMonthOfYearName(builder);
+                        this.consumeImmediateString("-");
+                        this.consumeYearWithCentury(builder, isNumberPattern(tokenWithNext.getNextToken()));  // Last
+                        break;
+
+                    // %+ - "%a %b %e %H:%M:%S %Z %Y"
+                    case RECURRED_PLUS:
+                        this.consumeWeekName(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeMonthOfYearName(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeDayOfMonth(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeHourOfDay(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeMinuteOfHour(builder);
+                        this.consumeImmediateString(":");
+                        this.consumeSecondOfMinute(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeTimeZone(builder);
+                        this.consumeImmediateString(" ");
+                        this.consumeYearWithCentury(builder, isNumberPattern(tokenWithNext.getNextToken()));  // Last
                         break;
 
                     default:  // Do nothing, and just pass through.
@@ -311,7 +427,7 @@ final class ParserWithContext {
 
         final long value;
         if (isNumberPattern(nextToken)) {
-            if (((FormatToken.Directive) thisToken).getFormatDirective() == FormatDirective.MILLI_OF_SECOND) {
+            if (thisToken.getFormatDirective().get() == FormatDirective.MILLI_OF_SECOND) {
                 value = this.consumeFractionalPartInInt(3, 9, "invalid fraction part of second");
             } else {
                 value = this.consumeFractionalPartInInt(9, 9, "invalid fraction part of second");
@@ -383,7 +499,7 @@ final class ParserWithContext {
     }
 
     private void consumeWeekOfYear(final Parsed.Builder builder, final FormatToken thisToken) {
-        if (((FormatToken.Directive) thisToken).getFormatDirective() == FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
+        if (thisToken.getFormatDirective().get() == FormatDirective.WEEK_OF_YEAR_STARTING_WITH_SUNDAY) {
             builder.setWeekOfYearStartingWithSunday(this.consumeDigitsInInt(2, 0, 53, "invalid week of year"));
         } else {
             builder.setWeekOfYearStartingWithMonday(this.consumeDigitsInInt(2, 0, 53, "invalid week of year"));
@@ -402,7 +518,7 @@ final class ParserWithContext {
         builder.setDayOfWeekStartingWithSunday0(this.consumeDigitsInInt(1, 0, 6, "invalid day of week"));
     }
 
-    private void consumeYearWithCentury(final Parsed.Builder builder, final FormatToken nextToken) {
+    private void consumeYearWithCentury(final Parsed.Builder builder, final boolean isNextTokenNumber) {
         final boolean negative;
         if (isSign(this.text, this.pos)) {
             negative = (this.text.charAt(this.pos) == '-');
@@ -412,7 +528,7 @@ final class ParserWithContext {
         }
 
         final int yearWithCentury;
-        if (isNumberPattern(nextToken)) {
+        if (isNextTokenNumber) {
             yearWithCentury = this.consumeDigitsInInt(4, 0, 9999, "invalid year");
         } else {
             // JSR-310 accepts only [-999_999_999, 999_999_999] as a year, not [Integer.MIN_VALUE, Integer.MAX_VALUE].
@@ -556,9 +672,9 @@ final class ParserWithContext {
     private static boolean isNumberPattern(final FormatToken token) {
         if (token == null) {
             return false;
-        } else if ((!token.isDirective()) && isDigit(((FormatToken.Immediate) token).getContent().charAt(0))) {
+        } else if (token.isImmediate() && isDigit(token.getImmediate().get().charAt(0))) {
             return true;
-        } else if (token.isDirective() && ((FormatToken.Directive) token).getFormatDirective().isNumeric()) {
+        } else if (token.isDirective() && token.getFormatDirective().get().isNumeric()) {
             return true;
         } else {
             return false;
