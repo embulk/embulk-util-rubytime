@@ -128,6 +128,22 @@ public class TestFormat {
                 "%::::z", FormatDirective.TIME_OFFSET, FormatDirectiveOptions.builder().setColons(4).build()));
         assertTrue(Format.compile("%::::z").onlyForFormatter());
 
+        testFormat("%-S", FormatToken.directive(
+                "%-S", FormatDirective.SECOND_OF_MINUTE, FormatDirectiveOptions.builder().setLeft().build()));
+        assertTrue(Format.compile("%-S").onlyForFormatter());
+
+        testFormat("%^A", FormatToken.directive(
+                "%^A", FormatDirective.DAY_OF_WEEK_FULL_NAME, FormatDirectiveOptions.builder().setUpper().build()));
+        assertTrue(Format.compile("%^A").onlyForFormatter());
+
+        testFormat("%#b", FormatToken.directive(
+                "%#b", FormatDirective.MONTH_OF_YEAR_ABBREVIATED_NAME, FormatDirectiveOptions.builder().setChCase().build()));
+        assertTrue(Format.compile("%#b").onlyForFormatter());
+
+        testFormat("%_M", FormatToken.directive(
+                       "%_M", FormatDirective.MINUTE_OF_HOUR, FormatDirectiveOptions.builder().setPadding(' ').build()));
+        assertTrue(Format.compile("%_M").onlyForFormatter());
+
         testFormat("%0d", FormatToken.directive(
                 "%0d", FormatDirective.DAY_OF_MONTH_ZERO_PADDED, FormatDirectiveOptions.builder().setPadding('0').build()));
         assertTrue(Format.compile("%0d").onlyForFormatter());
