@@ -65,8 +65,8 @@ public class TestRubyDateTimeFormatterFormatWithJRuby {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern(format);
         final String actual = formatter.formatWithZoneNameStyle(datetime, RubyDateTimeFormatter.ZoneNameStyle.SHORT);
 
-        System.out.println(expected);
-        System.out.println(actual);
+        System.out.println("Expected: " + expected);
+        System.out.println("  Actual: " + actual);
         assertEquals(expected, actual);
     }
 
@@ -85,8 +85,8 @@ public class TestRubyDateTimeFormatterFormatWithJRuby {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern(format);
         final String actual = formatter.formatWithZoneNameStyle(datetime, RubyDateTimeFormatter.ZoneNameStyle.SHORT);
 
-        System.out.println(expected);
-        System.out.println(actual);
+        System.out.println("Expected: " + expected);
+        System.out.println("  Actual: " + actual);
         assertEquals(expected, actual);
     }
 
