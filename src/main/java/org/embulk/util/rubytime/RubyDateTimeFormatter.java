@@ -32,6 +32,22 @@ public final class RubyDateTimeFormatter {
     }
 
     /**
+     * Enumeration of the style of zone name formatting.
+     */
+    public enum ZoneNameStyle {
+        /**
+         * Formats into {@code "UTC"} when the offset is +00:00. Otherwise {@code ""}.
+         */
+        NONE,
+
+        /**
+         * Formats into short zone names such as {@code "PST"}, {@code "PDT"}, {@code "JST"}, and else.
+         */
+        SHORT,
+        ;
+    }
+
+    /**
      * Creates a formatter using the specified pattern with the default resolver similar to Ruby's {@code Time.strptime}.
      *
      * @param pattern  the pattern to use, not null
@@ -53,6 +69,27 @@ public final class RubyDateTimeFormatter {
      */
     public String format(final TemporalAccessor temporal) {
         return (new FormatterWithContext(temporal)).format(this.format);
+    }
+
+    /**
+     * Formats a date-time object using this formatter with the zone name style specified.
+     *
+     * <p>If {@code zoneNameStyle} is {@link ZoneNameStyle#NONE}, {@code "%Z"} is formatted into {@code "UTC"}
+     * only when the offset is +00:00. Otherwise, formatted into {@code ""}. It follows the basic behavior of
+     * Ruby's {@code Time.strftime}.
+     *
+     * <p>If {@code zoneNameStyle} is {@link ZoneNameStyle#SHORT}, {@code "%Z"} is formatted into short zone names
+     * such as {@code "PST"}, {@code "PDT"}, {@code "JST"}, and else.
+     *
+     * @param temporal  the temporal object to format, not null
+     * @param zoneNameStyle  the style of zone name formatting
+     *
+     * @return the formatted string, not null
+     *
+     * @throws RubyDateTimeParseException  if the parse results in an error
+     */
+    public String formatWithZoneNameStyle(final TemporalAccessor temporal, final ZoneNameStyle zoneNameStyle) {
+        return (new FormatterWithContext(temporal)).format(this.format, zoneNameStyle);
     }
 
     /**
