@@ -18,14 +18,22 @@ package org.embulk.util.rubytime;
 
 import java.time.DateTimeException;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TimeZone;
 
 final class FormatterWithContext {
     FormatterWithContext(final TemporalAccessor temporal) {
@@ -33,6 +41,10 @@ final class FormatterWithContext {
     }
 
     String format(final Format format) {
+        return this.format(format, RubyDateTimeFormatter.ZoneNameStyle.NONE);
+    }
+
+    String format(final Format format, final RubyDateTimeFormatter.ZoneNameStyle zoneNameStyle) {
         final StringBuilder builder = new StringBuilder();
 
         for (final Format.TokenWithNext tokenWithNext : format) {
@@ -218,7 +230,7 @@ final class FormatterWithContext {
 
                     // %Z - Time zone abbreviation name
                     case TIME_ZONE_NAME:
-                        this.appendTimeZoneName(builder, options);
+                        this.appendTimeZoneName(builder, options, zoneNameStyle);
                         break;
 
                     // %z - Time zone as hour and minute offset from UTC (e.g. +0900)
@@ -594,8 +606,11 @@ final class FormatterWithContext {
     /**
      * Appends a time zone name for {@code "%Z"}.
      *
-     * <p>{@code "%Z"} outputs only {@code "UTC"} only when the offset is +00:00. It outputs {@code ""} otherwise.
-     * This is intentional. It's because:
+     * <h3>{@code zoneNameStyle}: {@code NONE}</h3>
+     *
+     * <p>If {@code zoneNameStyle} is {@code NONE}, {@code "%Z"} outputs only {@code "UTC"} only
+     * when the offset is +00:00. It outputs {@code ""} otherwise. It follows the basic behavior
+     * of Ruby's {@code Time.strftime} like below:
      *
      * <ol>
      * <li>MRI's {@code Time.zone} (the name of the time zone) cannot be set arbitrary.
@@ -659,21 +674,61 @@ final class FormatterWithContext {
      * irb(main):019:0> f.zone
      * => ""
      * }</pre>
+     *
+     * <h3>{@code zoneNameStyle}: {@code SHORT}</h3>
+     *
+     * <p>On the other hand, Embulk's legacy {@code TimestampFormatter} has used {@code org.jruby.util.RubyDateFormat}
+     * directly. Unlike just {@code Time.strptime}, {@code RubyDateFormat} formats {@code "%Z"} into short names.
+     * @see <a href="https://github.com/jruby/jruby/blob/9.1.15.0/core/src/main/java/org/jruby/util/RubyDateFormat.java#L411-L419">RubyDateFormat#compilePattern</a>
+     * @see <a href="https://github.com/jruby/jruby/blob/9.1.15.0/core/src/main/java/org/jruby/util/RubyDateFormat.java#L622-L624">RubyDateFormat#format</a>
+     *
+     * To emulate this behavior, when {@code zoneNameStyle} is {@code SHORT}, {@code "%Z"} is formatted into short
+     * names with {@link java.util.TimeZone#getDisplayName(boolean, int, java.util.Locale)}.
      */
     private void appendTimeZoneName(
             final StringBuilder builder,
-            final FormatDirectiveOptions options) {
+            final FormatDirectiveOptions options,
+            final RubyDateTimeFormatter.ZoneNameStyle zoneNameStyle) {
         final int offset = this.temporal.get(ChronoField.OFFSET_SECONDS);
-        if (offset == 0) {
-            this.fillPadding(builder, options, ' ', 0, 3);
-            if (options.isChCase()) {
-                builder.append("utc");
-            } else {
-                builder.append("UTC");
-            }
-        } else {
-            this.fillPadding(builder, options, ' ', 0, 0);
-            builder.append("");
+        final Optional<ZoneId> zoneId = getZoneId(this.temporal);
+
+        switch (zoneNameStyle) {
+            case NONE:
+                if (offset == 0) {
+                    this.fillPadding(builder, options, ' ', 0, 3);
+                    if (options.isChCase()) {
+                        builder.append("utc");
+                    } else {
+                        builder.append("UTC");
+                    }
+                } else {
+                    this.fillPadding(builder, options, ' ', 0, 0);
+                    builder.append("");
+                }
+                break;
+            case SHORT:
+                if (zoneId.isPresent() && zoneId.get() instanceof ZoneOffset) {
+                    final String shortName;
+                    if (((ZoneOffset) (zoneId.get())).getTotalSeconds() == 0) {
+                        shortName = "UTC";
+                    } else {
+                        shortName = zoneId.get().getDisplayName(TextStyle.SHORT, Locale.ROOT);
+                    }
+                    this.fillPadding(builder, options, ' ', 0, shortName.length());
+                    builder.append(shortName);
+                } else if (zoneId.isPresent()) {
+                    // Trying to emulate short zone names in JRuby / Joda-Time with older java.util.TimeZone.
+                    // It does almost the same job with org.jruby.util.RubyDateFormat#format.
+                    final TimeZone legacyTimeZone = TimeZone.getTimeZone(zoneId.get());
+                    final boolean inDaylightTime = isInDaylightTime(legacyTimeZone, this.temporal);
+                    final String shortName = legacyTimeZone.getDisplayName(inDaylightTime, TimeZone.SHORT, Locale.ROOT);
+                    this.fillPadding(builder, options, ' ', 0, shortName.length());
+                    builder.append(shortName);
+                } else {
+                    this.fillPadding(builder, options, ' ', 0, 0);
+                    builder.append("");
+                }
+                break;
         }
     }
 
@@ -915,6 +970,35 @@ final class FormatterWithContext {
         } else {
             return dayOfWeekNumberInJava;
         }
+    }
+
+    private static Optional<ZoneId> getZoneId(final TemporalAccessor temporal) {
+        try {
+            final ZoneId zoneId = temporal.query(TemporalQueries.zoneId());
+            if (zoneId != null) {
+                return Optional.of(zoneId.normalized());
+            }
+        } catch (final DateTimeException ex) {
+            // Pass-through.
+        }
+
+        try {
+            final int offset = temporal.get(ChronoField.OFFSET_SECONDS);
+            return Optional.of(ZoneOffset.ofTotalSeconds(offset));
+        } catch (final DateTimeException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private static boolean isInDaylightTime(final TimeZone legacyTimeZone, final TemporalAccessor temporalAsOf) {
+        final Instant instant;
+        try {
+            instant = Instant.from(temporalAsOf);
+        } catch (final DateTimeException ex) {
+            return false;
+        }
+
+        return legacyTimeZone.inDaylightTime(Date.from(instant));
     }
 
     static {
