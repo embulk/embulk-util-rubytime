@@ -710,7 +710,11 @@ final class FormatterWithContext {
                 if (zoneId.isPresent() && zoneId.get() instanceof ZoneOffset) {
                     final String shortName;
                     if (((ZoneOffset) (zoneId.get())).getTotalSeconds() == 0) {
-                        shortName = "UTC";
+                        if (options.isChCase()) {
+                            shortName = "utc";
+                        } else {
+                            shortName = "UTC";
+                        }
                     } else {
                         shortName = zoneId.get().getDisplayName(TextStyle.SHORT, Locale.ROOT);
                     }
@@ -723,7 +727,11 @@ final class FormatterWithContext {
                     final boolean inDaylightTime = isInDaylightTime(legacyTimeZone, this.temporal);
                     final String shortName = legacyTimeZone.getDisplayName(inDaylightTime, TimeZone.SHORT, Locale.ROOT);
                     this.fillPadding(builder, options, ' ', 0, shortName.length());
-                    builder.append(shortName);
+                    if (options.isChCase()) {
+                        builder.append(shortName.toLowerCase());
+                    } else {
+                        builder.append(shortName);
+                    }
                 } else {
                     this.fillPadding(builder, options, ' ', 0, 0);
                     builder.append("");

@@ -52,7 +52,7 @@ public class TestRubyDateTimeFormatterFormatWithJRuby {
 
     @SuppressWarnings("deprecation")  // For use of org.jruby.util.RubyDateFormat.
     private void assertRubyDateFormat(final ZonedDateTime datetime) {
-        final String format = "%Y-%m-%dT%H:%M:%S %Z";
+        final String format = "%Y-%m-%dT%H:%M:%S %Z %#Z";
 
         final org.jruby.util.RubyDateFormat jrubyFormat = new org.jruby.util.RubyDateFormat(format, Locale.ROOT, true);
         final DateTime jodaDateTime = new DateTime(
@@ -72,7 +72,7 @@ public class TestRubyDateTimeFormatterFormatWithJRuby {
 
     @SuppressWarnings("deprecation")  // For use of org.jruby.util.RubyDateFormat.
     private void assertRubyDateFormat(final OffsetDateTime datetime) {
-        final String format = "%Y-%m-%dT%H:%M:%S %Z";
+        final String format = "%Y-%m-%dT%H:%M:%S %Z %#Z";
 
         final org.jruby.util.RubyDateFormat jrubyFormat = new org.jruby.util.RubyDateFormat(format, Locale.ROOT, true);
         final DateTime jodaDateTime = new DateTime(
