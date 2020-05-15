@@ -43,8 +43,9 @@ See also: https://central.sonatype.org/pages/gradle.html
       ```
 4. Release.
     * ```
-      ./gradlew publishMavenPublicationToMavenCentralRepository
+      ./gradlew -Dorg.gradle.internal.publish.checksums.insecure=true publishMavenPublicationToMavenCentralRepository
       ```
+    * `-Dorg.gradle.internal.publish.checksums.insecure=true` is required due to: https://issues.sonatype.org/browse/OSSRH-56097
 5. Push the tag.
     * ```
       git push -u origin vX.Y.Z
