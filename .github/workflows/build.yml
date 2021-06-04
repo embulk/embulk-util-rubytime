@@ -2,6 +2,8 @@ name: Build and test
 on: push
 jobs:
   build:
+    strategy:
+      fail-fast: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -11,10 +13,36 @@ jobs:
         java-version: 1.8
     - name: Build with testing
       run: ./gradlew --stacktrace test jruby9_1_15Test jruby9_1_17Test jruby9_2_0Test jruby9_2_9Test build
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: test
+        path: build/reports/tests/test
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: test-jruby9_1_15Test
+        path: build/reports/tests/jruby9_1_15Test
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: test-jruby9_1_17Test
+        path: build/reports/tests/jruby9_1_17Test
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: test-jruby9_2_0Test
+        path: build/reports/tests/jruby9_2_0Test
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: test-jruby9_2_9Test
+        path: build/reports/tests/jruby9_2_9Test
   crubyTest:
     strategy:
+      fail-fast: false
       matrix:
-        ruby: [2.4.x, 2.5.x, 2.6.x]
+        ruby: [2.5.x, 2.6.x, 2.7.x]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -27,4 +55,9 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
     - name: Build with testing
-      run: ./gradlew crubyTest
+      run: ./gradlew -Pruby_version=${{ matrix.ruby }} crubyTest
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: test-cruby-${{ matrix.ruby }}
+        path: build/reports/tests/crubyTest

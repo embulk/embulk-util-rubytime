@@ -142,8 +142,18 @@ test {
 }
 
 task crubyTest(type: Test, description: "Runs tests with CRuby.", group: "Verification") {
+    doFirst {
+        if (!project.hasProperty("ruby_version")) {
+            logger.warn("WARNING: Set a Gradle project property 'ruby_version': ./gradlew -Pruby_version=X.Y.Z")
+        }
+    }
+
     classpath = sourceSets.crubyTest.runtimeClasspath
     testClassesDirs = sourceSets.crubyTest.output.classesDirs
+
+    if (project.hasProperty("ruby_version")) {
+        systemProperty "ruby_version", project.getProperty("ruby_version")
+    }
 
     useJUnitPlatform()
     testLogging {

@@ -18,6 +18,7 @@ package org.embulk.util.rubytime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +32,9 @@ public class TestRubyDateTimeZonesWithCRuby {
     @ParameterizedTest
     @MethodSource("provideToOffsetInSecondsParams")
     public void testToOffsetInSecondsWithCRuby(final String value) throws Exception {
+        assumeFalse(
+                RUBY_VERSION.contains("2.7") && (value.contains("\n") || value.contains("\t")),
+                "This test is disabled with CRuby 2.7. See: https://bugs.ruby-lang.org/issues/16768");
         assertToOffsetInSecondsCRuby(value);
     }
 
@@ -859,4 +863,16 @@ public class TestRubyDateTimeZonesWithCRuby {
     };
 
     private static CRubyCaller cruby;
+
+    private static final String RUBY_VERSION;
+
+    static {
+        final String rubyVersion = System.getProperty("ruby_version");
+        if (rubyVersion == null) {
+            RUBY_VERSION = "";
+        } else {
+            RUBY_VERSION = rubyVersion;
+        }
+        System.out.printf("RUBY_VERSION = %s\n", RUBY_VERSION);
+    }
 }
