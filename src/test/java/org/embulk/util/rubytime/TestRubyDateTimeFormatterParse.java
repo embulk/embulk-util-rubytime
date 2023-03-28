@@ -522,6 +522,36 @@ public class TestRubyDateTimeFormatterParse {
                      OffsetDateTime.of(2100, 2, 28, 20, 0, 0, 0, ZoneOffset.UTC).toInstant());
     }
 
+    @Test
+    public void testDefaultOffsetsWithZoneParsed() {
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S%Z", ZoneOffset.ofHours(12)).parse("2000-03-01T05:00:00Z")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S%z", ZoneOffset.ofHours(4)).parse("2000-03-01T05:00:00Z")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S%:z", ZoneOffset.ofHours(-1)).parse("2000-03-01T05:00:00Z")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S%::z", ZoneOffset.ofHours(-9)).parse("2000-03-01T05:00:00Z")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S%:::z", ZoneOffset.ofHours(9)).parse("2000-03-01T05:00:00Z")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S %Z", ZoneOffset.ofHours(5)).parse("2000-03-01T05:00:00 UTC")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S %z", ZoneOffset.ofHours(3)).parse("2000-03-01T05:00:00 UTC")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.UTC).toInstant());
+
+        assertEquals(
+                Instant.from(createOffsetFormatter("%Y-%m-%dT%H:%M:%S %Z", ZoneOffset.ofHours(5)).parse("2000-03-01T05:00:00 -03:00")),
+                OffsetDateTime.of(2000, 3, 1, 5, 0, 0, 0, ZoneOffset.ofHours(-3)).toInstant());
+    }
+
     private static TemporalAccessor strptime(final String string, final String format) {
         final RubyDateTimeFormatter formatter = RubyDateTimeFormatter.ofPattern(format);
         return formatter.parseUnresolved(string);
