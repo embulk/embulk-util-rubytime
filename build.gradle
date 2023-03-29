@@ -142,18 +142,21 @@ javadoc {
 jar {
     metaInf {
         from rootProject.file("LICENSE")
+        // Not including NOTICE because it has license notice only about test dependencies.
     }
 }
 
 sourcesJar {
     metaInf {
         from rootProject.file("LICENSE")
+        // Not including NOTICE because it has license notice only about test dependencies.
     }
 }
 
 javadocJar {
     metaInf {
         from rootProject.file("LICENSE")
+        // Not including NOTICE because it has license notice only about test dependencies.
     }
 }
 
