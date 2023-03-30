@@ -1,62 +1,66 @@
-apply plugin: "java"
-apply plugin: "maven-publish"
-apply plugin: "signing"
-
-group = "org.embulk"
-archivesBaseName = "${project.name}"
-version = "0.3.3-SNAPSHOT"
-description "Almost Ruby-compatible date-time processor for Embulk and Embulk plugins"
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-configurations {
-    crubyTestImplementation {
-        extendsFrom testImplementation
-    }
-    crubyTestRuntime {
-        extendsFrom testRuntime
-    }
-    jruby9_1_15TestImplementation {
-        extendsFrom testImplementation
-    }
-    jruby9_1_15TestRuntime {
-        extendsFrom testRuntime
-    }
-    jruby9_1_17TestImplementation {
-        extendsFrom testImplementation
-    }
-    jruby9_1_17TestRuntime {
-        extendsFrom testRuntime
-    }
-    jruby9_2_0TestImplementation {
-        extendsFrom testImplementation
-    }
-    jruby9_2_0TestRuntime {
-        extendsFrom testRuntime
-    }
-    jruby9_2_9TestImplementation {
-        extendsFrom testImplementation
-    }
-    jruby9_2_9TestRuntime {
-        extendsFrom testRuntime
-    }
+plugins {
+    id "java"
+    id "maven-publish"
+    id "signing"
+    id "checkstyle"
 }
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
+group = "org.embulk"
+version = "0.3.3-SNAPSHOT"
+description "Almost Ruby-compatible date-time processor for Embulk and Embulk plugins"
 
-    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.5.2"
+configurations {
+    compileClasspath.resolutionStrategy.activateDependencyLocking()
+    runtimeClasspath.resolutionStrategy.activateDependencyLocking()
 
-    jruby9_1_15TestImplementation "org.jruby:jruby-complete:9.1.15.0"
-    jruby9_1_17TestImplementation "org.jruby:jruby-complete:9.1.17.0"
-    jruby9_2_0TestImplementation "org.jruby:jruby-complete:9.2.0.0"
-    jruby9_2_9TestImplementation "org.jruby:jruby-complete:9.2.9.0"
+    crubyTestImplementation {
+        extendsFrom testImplementation
+    }
+    crubyTestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+    }
+    jruby9_1_15TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_1_15TestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+    }
+    jruby9_1_17TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_1_17TestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+    }
+    jruby9_2_0TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_2_0TestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+    }
+    jruby9_2_9TestImplementation {
+        extendsFrom testImplementation
+    }
+    jruby9_2_9TestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    options.encoding = "UTF-8"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+
+    withJavadocJar()
+    withSourcesJar()
 }
 
 sourceSets {
@@ -113,14 +117,16 @@ sourceSets {
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-    options.encoding = "UTF-8"
-}
+dependencies {
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.2"
 
-java {
-    withJavadocJar()
-    withSourcesJar()
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.2"
+
+    jruby9_1_15TestImplementation "org.jruby:jruby-complete:9.1.15.0"
+    jruby9_1_17TestImplementation "org.jruby:jruby-complete:9.1.17.0"
+    jruby9_2_0TestImplementation "org.jruby:jruby-complete:9.2.0.0"
+    jruby9_2_9TestImplementation "org.jruby:jruby-complete:9.2.9.0"
 }
 
 javadoc {
@@ -133,89 +139,38 @@ javadoc {
     }
 }
 
-test {
-    useJUnitPlatform()
-    testLogging {
-        outputs.upToDateWhen { false }
-        showStandardStreams = true
-    }
-}
-
-task crubyTest(type: Test, description: "Runs tests with CRuby.", group: "Verification") {
-    classpath = sourceSets.crubyTest.runtimeClasspath
-    testClassesDirs = sourceSets.crubyTest.output.classesDirs
-
-    useJUnitPlatform()
-    testLogging {
-        outputs.upToDateWhen { false }
-        showStandardStreams = true
-    }
-}
-
-task jruby9_1_15Test(type: Test, description: "Runs tests with JRuby 9.1.15.", group: "Verification") {
-    classpath = sourceSets.jruby9_1_15Test.runtimeClasspath
-    testClassesDirs = sourceSets.jruby9_1_15Test.output.classesDirs
-
-    useJUnitPlatform()
-    testLogging {
-        outputs.upToDateWhen { false }
-        showStandardStreams = true
-    }
-}
-
-task jruby9_1_17Test(type: Test, description: "Runs tests with JRuby 9.1.17.", group: "Verification") {
-    classpath = sourceSets.jruby9_1_17Test.runtimeClasspath
-    testClassesDirs = sourceSets.jruby9_1_17Test.output.classesDirs
-
-    useJUnitPlatform()
-    testLogging {
-        outputs.upToDateWhen { false }
-        showStandardStreams = true
-    }
-}
-
-task jruby9_2_0Test(type: Test, description: "Runs tests with JRuby 9.2.0.", group: "Verification") {
-    classpath = sourceSets.jruby9_2_0Test.runtimeClasspath
-    testClassesDirs = sourceSets.jruby9_2_0Test.output.classesDirs
-
-    useJUnitPlatform()
-    testLogging {
-        outputs.upToDateWhen { false }
-        showStandardStreams = true
-    }
-}
-
-task jruby9_2_9Test(type: Test, description: "Runs tests with JRuby 9.2.9.", group: "Verification") {
-    classpath = sourceSets.jruby9_2_9Test.runtimeClasspath
-    testClassesDirs = sourceSets.jruby9_2_9Test.output.classesDirs
-
-    useJUnitPlatform()
-    testLogging {
-        outputs.upToDateWhen { false }
-        showStandardStreams = true
-    }
-}
-
 jar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        // Not including NOTICE because it has license notice only about test dependencies.
+    }
 }
 
 sourcesJar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        // Not including NOTICE because it has license notice only about test dependencies.
+    }
 }
 
 javadocJar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        // Not including NOTICE because it has license notice only about test dependencies.
+    }
+}
+
+// It should not publish a `.module` file in Maven Central.
+// https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html#sub:disabling-gmm-publication
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
 
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = "${project.group}"
-            artifactId = "${project.name}"
+            groupId = project.group
+            artifactId = project.name
 
             from components.java
             // javadocJar and sourcesJar are added by java.withJavadocJar() and java.withSourcesJar() above.
@@ -224,8 +179,8 @@ publishing {
             pom {  // https://central.sonatype.org/pages/requirements.html
                 packaging "jar"
 
-                name = "${project.name}"
-                description = "${project.description}"
+                name = project.name
+                description = project.description
                 url = "https://www.embulk.org/"
 
                 licenses {
@@ -233,12 +188,12 @@ publishing {
                         // http://central.sonatype.org/pages/requirements.html#license-information
                         name = "The Apache License, Version 2.0"
                         url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                        distribution = "repo"
                     }
                 }
 
                 developers {
                     developer {
-                        id = "dmikurube"
                         name = "Dai MIKURUBE"
                         email = "dmikurube@treasure-data.com"
                     }
@@ -271,5 +226,102 @@ publishing {
 }
 
 signing {
+    if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
+        logger.lifecycle("Signing with an in-memory key.")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
     sign publishing.publications.maven
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
+}
+
+task crubyTest(type: Test, description: "Runs tests with CRuby.", group: "Verification") {
+    classpath = sourceSets.crubyTest.runtimeClasspath
+    testClassesDirs = sourceSets.crubyTest.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
+}
+
+task jruby9_1_15Test(type: Test, description: "Runs tests with JRuby 9.1.15.", group: "Verification") {
+    classpath = sourceSets.jruby9_1_15Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_1_15Test.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
+}
+
+task jruby9_1_17Test(type: Test, description: "Runs tests with JRuby 9.1.17.", group: "Verification") {
+    classpath = sourceSets.jruby9_1_17Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_1_17Test.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
+}
+
+task jruby9_2_0Test(type: Test, description: "Runs tests with JRuby 9.2.0.", group: "Verification") {
+    classpath = sourceSets.jruby9_2_0Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_2_0Test.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
+}
+
+task jruby9_2_9Test(type: Test, description: "Runs tests with JRuby 9.2.9.", group: "Verification") {
+    classpath = sourceSets.jruby9_2_9Test.runtimeClasspath
+    testClassesDirs = sourceSets.jruby9_2_9Test.output.classesDirs
+
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
 }
