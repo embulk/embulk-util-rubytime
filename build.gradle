@@ -10,7 +10,7 @@ repositories {
 }
 
 group = "org.embulk"
-version = "0.4.0-SNAPSHOT"
+version = "0.4.0"
 description "Almost Ruby-compatible date-time processor for Embulk and Embulk plugins"
 
 configurations {
