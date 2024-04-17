@@ -1,12 +1,10 @@
-Embulk Utilities for Ruby Time
-===============================
-
-Almost Ruby-compatible date-time processor for Embulk and Embulk plugins.
+Almost Ruby-compatible date-time processor for Embulk and Embulk plugins
+=========================================================================
 
 For Embulk plugin developers
 -----------------------------
 
-* [Javadoc](https://dev.embulk.org/embulk-util-config/)
+* [Javadoc](https://dev.embulk.org/embulk-util-rubytime/)
 
 For Maintainers
 ----------------
