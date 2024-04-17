@@ -145,6 +145,7 @@ final class Format implements Iterable<Format.TokenWithNext> {
          * @param beginningIndex  index of the character next to {@code '%'} in {@code formatString}.
          * @return {@code true} if recognized as a directive, {@code false} otherwise.
          */
+        @SuppressWarnings("checkstyle:LeftCurly")
         private boolean compileDirective(final int beginningIndex) {
             final FormatDirectiveOptions.Builder optionsBuilder = FormatDirectiveOptions.builder();
 
@@ -284,6 +285,8 @@ final class Format implements Iterable<Format.TokenWithNext> {
 
                     case '0':
                         optionsBuilder.setPadding('0');
+                        // fall-through
+
                     case '1':
                     case '2':
                     case '3':

@@ -337,3 +337,13 @@ task jruby9_2_9Test(type: Test, description: "Runs tests with JRuby 9.2.9.", gro
         outputs.upToDateWhen { false }
     }
 }
+
+checkstyle {
+    toolVersion = libs.versions.checkstyle.get()
+    configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle.xml")
+    configProperties = [
+        "org.checkstyle.google.suppressionfilter.config": file("${rootProject.projectDir}/config/checkstyle/checkstyle-suppressions.xml"),
+    ]
+    ignoreFailures = false
+    maxWarnings = 0
+}

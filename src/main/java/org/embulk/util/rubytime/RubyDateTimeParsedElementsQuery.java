@@ -63,6 +63,7 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
      * }
      * </pre>
      */
+    @SuppressWarnings("checkstyle:LineLength")
     public static interface FractionalSecondConverter {
         /**
          * Converts fractional second, a pair of an integer part and a fraction part, into an arbitrary {@link java.lang.Object} to be stored in the result {@link java.util.Map} of {@link RubyDateTimeParsedElementsQuery}.
@@ -324,21 +325,21 @@ public final class RubyDateTimeParsedElementsQuery<T> implements TemporalQuery<M
     private static final MillisecondToBigDecimalConverter MILLISECOND_TO_BIG_DECIMAL;
     private static final StringAsIs STRING_AS_IS;
 
-    private final static class FractionalSecondToBigDecimalConverter implements FractionalSecondConverter {
+    private static final class FractionalSecondToBigDecimalConverter implements FractionalSecondConverter {
         @Override
         public Object convertFractionalSecond(final long integer, final int nano) {
             return BigDecimal.valueOf(integer).add(BigDecimal.valueOf(nano, 9));
         }
     }
 
-    private final static class MillisecondToBigDecimalConverter implements MillisecondConverter {
+    private static final class MillisecondToBigDecimalConverter implements MillisecondConverter {
         @Override
         public Object convertMillisecond(final long millisecond) {
             return BigDecimal.valueOf(millisecond, 3);
         }
     }
 
-    private final static class StringAsIs implements MapKeyConverter<String> {
+    private static final class StringAsIs implements MapKeyConverter<String> {
         @Override
         public String convertMapKey(final String mapKey) {
             return mapKey;

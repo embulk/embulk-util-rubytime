@@ -17,7 +17,6 @@
 package org.embulk.util.rubytime;
 
 import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalQuery;
 
 /**

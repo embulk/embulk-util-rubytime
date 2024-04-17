@@ -396,7 +396,7 @@ final class DefaultRubyTimeResolver extends RubyDateTimeResolver {
                 ? original.get(ChronoField.MINUTE_OF_HOUR) : this.defaultMinuteOfHour;
         int secondOfMinute = original.isSupported(ChronoField.SECOND_OF_MINUTE)
                 ? original.get(ChronoField.SECOND_OF_MINUTE) : this.defaultSecondOfMinute;
-        int nanoOfSecond = original.isSupported(ChronoField.NANO_OF_SECOND)
+        final int nanoOfSecond = original.isSupported(ChronoField.NANO_OF_SECOND)
                 ? original.get(ChronoField.NANO_OF_SECOND) : this.defaultNanoOfSecond;
 
         int offset = zoneOffset.getTotalSeconds();

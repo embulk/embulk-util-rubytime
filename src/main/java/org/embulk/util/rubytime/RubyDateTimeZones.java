@@ -55,6 +55,7 @@ package org.embulk.util.rubytime;
  * irb(main):008:0> Time.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
  * => 2017-12-31 12:34:56 -0800}</pre>
  */
+@SuppressWarnings("checkstyle:Indentation")
 public final class RubyDateTimeZones {
     private RubyDateTimeZones() {
         // No instantiation.
@@ -142,6 +143,7 @@ public final class RubyDateTimeZones {
      *
      * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_0/ext/date/date_parse.c?view=markup#l415">the latter part of date_zone_to_diff</a>
      */
+    @SuppressWarnings("checkstyle:IllegalTokenText")
     private static String normalize(final String original) {
         final int originalLength = original.length();
         StringBuilder normalized = null;
@@ -550,6 +552,7 @@ public final class RubyDateTimeZones {
         case "WEST ASIA":         return 18000;
         case "WEST PACIFIC":      return 36000;
         case "YAKUTSK":           return 32400;
+        default:  // Pass-through.
         }
         return Integer.MIN_VALUE;
     }

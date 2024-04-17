@@ -58,6 +58,7 @@ import java.util.Locale;
  * irb(main):008:0> Time.strptime("2017-12-31 12:34:56 PST", "%Y-%m-%d %H:%M:%S %z")
  * => 2017-12-31 12:34:56 -0800}</pre>
  */
+@SuppressWarnings("checkstyle:Indentation")
 public final class RubyTimeZones {
     private RubyTimeZones() {
         // No instantiation.
@@ -105,19 +106,19 @@ public final class RubyTimeZones {
         case 3:  // +HH
             return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2));
         case 5:  // +HHMM
-            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                       Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4));
+            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                       && Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4));
         case 6:  // +HH:MM
-            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                       zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5));
+            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                       && zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5));
         case 7:  // +HHMMSS
-            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                       Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4)) &&
-                       Character.isDigit(zone.charAt(5)) && Character.isDigit(zone.charAt(6));
+            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                       && Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4))
+                       && Character.isDigit(zone.charAt(5)) && Character.isDigit(zone.charAt(6));
         case 9:  // +HH:MM:SS
-            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                       zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5)) &&
-                       zone.charAt(6) == ':' && Character.isDigit(zone.charAt(7)) && Character.isDigit(zone.charAt(8));
+            return Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                       && zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5))
+                       && zone.charAt(6) == ':' && Character.isDigit(zone.charAt(7)) && Character.isDigit(zone.charAt(8));
         default:
             return false;
         }
@@ -131,37 +132,39 @@ public final class RubyTimeZones {
             }
             return Integer.MIN_VALUE;
         case 5:  // +HHMM
-            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                    Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4))) {
-                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600 +
-                           (Character.digit(zone.charAt(3), 10) * 10 + Character.digit(zone.charAt(4), 10)) * 60;
+            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                    && Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4))) {
+                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600
+                           + (Character.digit(zone.charAt(3), 10) * 10 + Character.digit(zone.charAt(4), 10)) * 60;
             }
             return Integer.MIN_VALUE;
         case 6:  // +HH:MM
-            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                    zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5))) {
-                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600 +
-                           (Character.digit(zone.charAt(4), 10) * 10 + Character.digit(zone.charAt(5), 10)) * 60;
+            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                    && zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5))) {
+                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600
+                           + (Character.digit(zone.charAt(4), 10) * 10 + Character.digit(zone.charAt(5), 10)) * 60;
             }
             return Integer.MIN_VALUE;
         case 7:  // +HHMMSS
-            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                    Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4)) &&
-                    Character.isDigit(zone.charAt(5)) && Character.isDigit(zone.charAt(6))) {
-                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600 +
-                           (Character.digit(zone.charAt(3), 10) * 10 + Character.digit(zone.charAt(4), 10)) * 60 +
-                           (Character.digit(zone.charAt(5), 10) * 10 + Character.digit(zone.charAt(6), 10));
+            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                    && Character.isDigit(zone.charAt(3)) && Character.isDigit(zone.charAt(4))
+                    && Character.isDigit(zone.charAt(5)) && Character.isDigit(zone.charAt(6))) {
+                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600
+                           + (Character.digit(zone.charAt(3), 10) * 10 + Character.digit(zone.charAt(4), 10)) * 60
+                           + (Character.digit(zone.charAt(5), 10) * 10 + Character.digit(zone.charAt(6), 10));
             }
             return Integer.MIN_VALUE;
         case 9:  // +HH:MM:SS
-            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2)) &&
-                    zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5)) &&
-                    zone.charAt(6) == ':' && Character.isDigit(zone.charAt(7)) && Character.isDigit(zone.charAt(8))) {
-                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600 +
-                           (Character.digit(zone.charAt(4), 10) * 10 + Character.digit(zone.charAt(5), 10)) * 60 +
-                           (Character.digit(zone.charAt(7), 10) * 10 + Character.digit(zone.charAt(8), 10));
+            if (Character.isDigit(zone.charAt(1)) && Character.isDigit(zone.charAt(2))
+                    && zone.charAt(3) == ':' && Character.isDigit(zone.charAt(4)) && Character.isDigit(zone.charAt(5))
+                    && zone.charAt(6) == ':' && Character.isDigit(zone.charAt(7)) && Character.isDigit(zone.charAt(8))) {
+                return (Character.digit(zone.charAt(1), 10) * 10 + Character.digit(zone.charAt(2), 10)) * 3600
+                           + (Character.digit(zone.charAt(4), 10) * 10 + Character.digit(zone.charAt(5), 10)) * 60
+                           + (Character.digit(zone.charAt(7), 10) * 10 + Character.digit(zone.charAt(8), 10));
             }
             return Integer.MIN_VALUE;
+        default:
+            // Pass-through.
         }
         return Integer.MIN_VALUE;
     }
@@ -230,6 +233,7 @@ ng-if-else-stat">How is String in switch statement more efficient than correspon
         case "W":   return OFFSET_N_10;
         case "X":   return OFFSET_N_11;
         case "Y":   return OFFSET_N_12;
+        default:    // Pass-through.
         }
         return null;
     }
