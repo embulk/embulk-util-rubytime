@@ -118,10 +118,10 @@ sourceSets {
 }
 
 dependencies {
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.2"
+    testImplementation platform(libs.junit5.bom)
+    testImplementation libs.bundles.junit5.implementation
 
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.2"
+    testRuntimeOnly libs.bundles.junit5.runtime
 
     jruby9_1_15TestImplementation "org.jruby:jruby-complete:9.1.15.0"
     jruby9_1_17TestImplementation "org.jruby:jruby-complete:9.1.17.0"
@@ -157,6 +157,19 @@ javadocJar {
     metaInf {
         from rootProject.file("LICENSE")
         // Not including NOTICE because it has license notice only about test dependencies.
+    }
+}
+
+// A safer and strict alternative to: "dependencies" (and "dependencies --write-locks")
+//
+// This task fails explicitly when the specified dependency is not available.
+// In contrast, "dependencies (--write-locks)" does not fail even when a part the dependencies are unavailable.
+//
+// https://docs.gradle.org/8.7/userguide/dependency_locking.html#generating_and_updating_dependency_locks
+task checkDependencies {
+    notCompatibleWithConfigurationCache("The task \"checkDependencies\" filters configurations at execution time.")
+    doLast {
+        configurations.findAll { it.canBeResolved }.each { it.resolve() }
     }
 }
 
