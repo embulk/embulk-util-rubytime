@@ -54,13 +54,19 @@ public class TestRubyDateTimeZones {
     public void testParseOffsetTooLongFraction() {
         assertThrows(
                 NumberFormatException.class,
-                () -> { RubyDateTimeZones.parseOffsetForTesting("UTC+19.001953125"); });
+                () -> {
+                    RubyDateTimeZones.parseOffsetForTesting("UTC+19.001953125");
+                });
         assertThrows(
                 NumberFormatException.class,
-                () -> { RubyDateTimeZones.parseOffsetForTesting("UTC+19.0009765625"); });
+                () -> {
+                    RubyDateTimeZones.parseOffsetForTesting("UTC+19.0009765625");
+                });
         assertThrows(
                 NumberFormatException.class,
-                () -> { RubyDateTimeZones.parseOffsetForTesting("UTC+19.0000111111"); });
+                () -> {
+                    RubyDateTimeZones.parseOffsetForTesting("UTC+19.0000111111");
+                });
     }
 
     @Test
@@ -285,7 +291,7 @@ public class TestRubyDateTimeZones {
             "!",
             "?",
             "*",
-        })
+    })
     public void testUnmatchingZoneTab(final String name) {
         assertEquals(Integer.MIN_VALUE, RubyDateTimeZones.mapZoneNameToOffsetInSecondsForTesting(name.toUpperCase()));
     }

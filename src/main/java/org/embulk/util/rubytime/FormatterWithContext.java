@@ -44,6 +44,7 @@ final class FormatterWithContext {
         return this.format(format, RubyDateTimeFormatter.ZoneNameStyle.NONE);
     }
 
+    @SuppressWarnings("checkstyle:LeftCurly")
     String format(final Format format, final RubyDateTimeFormatter.ZoneNameStyle zoneNameStyle) {
         final StringBuilder builder = new StringBuilder();
 
@@ -371,6 +372,9 @@ final class FormatterWithContext {
                         // %+ is not supported in formatter. %+ is only for parser.
                         builder.append(token.getImmediate().orElse(""));
                         break;
+
+                    default:
+                        // Pass-through.
                 }
             }
         }
@@ -616,12 +620,16 @@ final class FormatterWithContext {
      * <li>MRI's {@code Time.zone} (the name of the time zone) cannot be set arbitrary.
      * It is set almost only from {@code localtime(3)} from the computer's environment,
      * such as the TZ environment variable.
-     * @see <a href="https://twitter.com/shyouhei/status/1245616200874209283">Tweet from @shyouhei (in Japanese)</a>
-     * @see <a href="https://twitter.com/nalsh/status/1245689453315670022">Tweet from @nalsh (in Japanese)</a>
+     * <ul>
+     * <li><a href="https://twitter.com/shyouhei/status/1245616200874209283">Tweet from @shyouhei (in Japanese)</a>
+     * <li><a href="https://twitter.com/nalsh/status/1245689453315670022">Tweet from @nalsh (in Japanese)</a>
+     * </ul>
      * <li>MRI's {@code Time#strptime} never sets the name of the time zone from its input.
      * The name of the time zone is set only from {@code Time.utc} or {@code Time.local}.
-     * @see <a href="https://docs.ruby-lang.org/en/2.7.0/Time.html#method-c-local">Time.local</a>
-     * @see <a href="https://docs.ruby-lang.org/en/2.7.0/Time.html#method-c-utc">Time.utc</a>
+     * <ul>
+     * <li><a href="https://docs.ruby-lang.org/en/2.7.0/Time.html#method-c-local">Time.local</a>
+     * <li><a href="https://docs.ruby-lang.org/en/2.7.0/Time.html#method-c-utc">Time.utc</a>
+     * </ul>
      * <li>Embulk uses only {@link java.time.Instant} as its internal timestamp representation.
      * </ol>
      *
@@ -679,6 +687,7 @@ final class FormatterWithContext {
      *
      * <p>On the other hand, Embulk's legacy {@code TimestampFormatter} has used {@code org.jruby.util.RubyDateFormat}
      * directly. Unlike just {@code Time.strptime}, {@code RubyDateFormat} formats {@code "%Z"} into short names.
+     *
      * @see <a href="https://github.com/jruby/jruby/blob/9.1.15.0/core/src/main/java/org/jruby/util/RubyDateFormat.java#L411-L419">RubyDateFormat#compilePattern</a>
      * @see <a href="https://github.com/jruby/jruby/blob/9.1.15.0/core/src/main/java/org/jruby/util/RubyDateFormat.java#L622-L624">RubyDateFormat#format</a>
      *
@@ -737,6 +746,8 @@ final class FormatterWithContext {
                     builder.append("");
                 }
                 break;
+            default:
+                // Pass-through.
         }
     }
 
@@ -872,6 +883,7 @@ final class FormatterWithContext {
      *
      * @see <a href="https://github.com/ruby/ruby/blob/v2_6_3/strftime.c#L985-L1092">iso8601wknum</a>
      */
+    @SuppressWarnings("checkstyle:LeftCurly")
     private static int calculateIso8601WeekNumber(final TemporalAccessor temporal) {
         final int jan1DayOfWeek = calculateJan1DayOfWeek(temporal);
 

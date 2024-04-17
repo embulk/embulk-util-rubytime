@@ -16,10 +16,10 @@
 
 package org.embulk.util.rubytime;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.time.Instant;
 import java.time.Year;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 final class ParserWithContext {
     ParserWithContext(final CharSequence text) {
@@ -717,7 +717,7 @@ final class ParserWithContext {
      * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_5_1/ext/date/date_strptime.c?view=markup#l571">ext/date/date_strptime.c</a>
      */
     private static final Pattern ZONE_PARSE_REGEX =
-        Pattern.compile("\\A("
+            Pattern.compile("\\A("
                                 + "(?:gmt|utc?)?[-+]\\d+(?:[,.:]\\d+(?::\\d+)?)?"
                                 + "|(?-i:[[\\p{Alpha}].\\s]+)(?:standard|daylight)\\s+time\\b"
                                 + "|(?-i:[[\\p{Alpha}]]+)(?:\\s+dst)?\\b"

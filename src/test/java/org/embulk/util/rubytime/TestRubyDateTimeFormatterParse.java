@@ -18,7 +18,6 @@ package org.embulk.util.rubytime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.DateTimeException;
@@ -429,7 +428,7 @@ public class TestRubyDateTimeFormatterParse {
         assertParsedTime("-31556889832780799", "%s", Instant.ofEpochSecond(-31556889832780799L, 0));
         assertParsedTime("-31556889832780800", "%s", Instant.ofEpochSecond(-31556889832780800L, 0));  // Sure
 
-        assertParsedTime( "-31556889864403199", "%s", Instant.ofEpochSecond(-31556889864403199L, 0));
+        assertParsedTime("-31556889864403199", "%s", Instant.ofEpochSecond(-31556889864403199L, 0));
         assertFailToParse("-31556889864403200", "%s");  // To succeed? -(Instant.MAX + 1)
         assertFailToParse("-31557014135596799", "%s");  // To succeed? -999999999-01-01T00:00:00
         assertFailToParse("-31557014167219200", "%s");  // To succeed? Instant.MIN.
