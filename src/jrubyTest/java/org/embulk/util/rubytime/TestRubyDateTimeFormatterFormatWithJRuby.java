@@ -120,8 +120,27 @@ public class TestRubyDateTimeFormatterFormatWithJRuby {
         ZonedDateTime.of(1996, 7, 3, 2, 0, 45, 0, ZoneId.of("America/Santiago")),
         ZonedDateTime.of(1996, 1, 3, 2, 0, 45, 0, ZoneId.of("Asia/Baku")),
         ZonedDateTime.of(1996, 7, 3, 2, 0, 45, 0, ZoneId.of("Asia/Baku")),
-        ZonedDateTime.of(1996, 1, 3, 2, 0, 45, 0, ZoneId.of("Asia/Choibalsan")),
-        ZonedDateTime.of(1996, 7, 3, 2, 0, 45, 0, ZoneId.of("Asia/Choibalsan")),
+
+        // The timezone of Asia/Choibalsan was updated retroactively (like "backdate").
+        // https://github.com/eggert/tz/commit/7eb5bf887927e35079e5cc12e2252819a7c47bb0
+        //
+        // The tzdb had believed :
+        // "Asia/Choibalsan had been in UTC+9 until 2008-03-31"
+        //
+        // However, the tzdb was updated retroactively between 2024a and 2024b so that :
+        // "Asia/Choibalsan has been in UTC+8 in all the time since 1979"
+        //
+        // Then, the interpretation of "1996-01-03T02:00:45 [Asia/Choibalsan]" has changed :
+        // - Before: 1996-01-03T02:00:45 +09:00 [Asia/Choibalsan]
+        // - After:  1996-01-03T02:00:45 +08:00 [Asia/Choibalsan]
+        //
+        // It'd be discussed whether the behavior of embulk-util-rubytime should change or not.
+        // Until then, we disable the test cases about Asia/Choibalsan, and test it with later date.
+        // ZonedDateTime.of(1996, 1, 3, 2, 0, 45, 0, ZoneId.of("Asia/Choibalsan")),
+        // ZonedDateTime.of(1996, 7, 3, 2, 0, 45, 0, ZoneId.of("Asia/Choibalsan")),
+        ZonedDateTime.of(2009, 1, 3, 2, 0, 45, 0, ZoneId.of("Asia/Choibalsan")),
+        ZonedDateTime.of(2009, 7, 3, 2, 0, 45, 0, ZoneId.of("Asia/Choibalsan")),
+
         ZonedDateTime.of(1996, 1, 3, 2, 0, 45, 0, ZoneId.of("Asia/Hovd")),
         ZonedDateTime.of(1996, 7, 3, 2, 0, 45, 0, ZoneId.of("Asia/Hovd")),
         ZonedDateTime.of(1996, 1, 3, 2, 0, 45, 0, ZoneId.of("Asia/Istanbul")),
