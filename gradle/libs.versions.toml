@@ -1,6 +1,6 @@
 [versions]
 
-junit5 = "5.13.1"
+junit5 = "5.13.2"
 
 checkstyle = "9.3"
 
